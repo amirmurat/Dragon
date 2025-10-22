@@ -10,6 +10,7 @@ import Providers from "./pages/Providers"
 import Provider from "./pages/Provider"
 import Bookings from "./pages/Bookings"
 import Dashboard from "./pages/Dashboard"
+import Admin from "./pages/Admin"
 import { Layout } from "./ui/Layout"
 import RequireAuth from "./ui/RequireAuth"
 
@@ -28,6 +29,7 @@ const router = createBrowserRouter([
       { path: "providers/:id", element: <RequireAuth><Provider /></RequireAuth> },
       { path: "bookings", element: <RequireAuth><Bookings /></RequireAuth> },
       { path: "dashboard", element: <RequireAuth><Dashboard /></RequireAuth> },
+      { path: "admin", element: <RequireAuth><Admin /></RequireAuth> },
     ]
   }
 ])

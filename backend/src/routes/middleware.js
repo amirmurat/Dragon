@@ -1,6 +1,7 @@
 ﻿import jwt from "jsonwebtoken"
+import { ROLES } from "../roles.js"
 
-// Жёсткая проверка: без токена 401
+// Жёсткая проверка
 export function requireAuth(req, res, next) {
   const h = req.headers.authorization || ""
   const token = h.startsWith("Bearer ") ? h.slice(7) : null
@@ -14,7 +15,7 @@ export function requireAuth(req, res, next) {
   }
 }
 
-// Мягкая проверка: если токен есть и валидный — проставим req.user, иначе просто идём дальше
+// Мягкая проверка
 export function authOptional(req, _res, next) {
   const h = req.headers.authorization || ""
   const token = h.startsWith("Bearer ") ? h.slice(7) : null
@@ -22,28 +23,26 @@ export function authOptional(req, _res, next) {
     try {
       const payload = jwt.verify(token, process.env.JWT_SECRET || "devsecret")
       req.user = { id: payload.sub, email: payload.email, role: payload.role }
-    } catch {
-      // игнорируем битый токен
-    }
+    } catch {}
   }
   next()
 }
 
-// Владелец провайдера или админ
-export async function ensureOwnerOrAdmin(req, res, next) {
-  if (!req.user) return res.status(401).json({ error: "unauthorized" })
-  if (req.user.role === "ADMIN") return next()
-  const prisma = req.ctx.prisma
-  const p = await prisma.provider.findUnique({ where: { id: req.params.id } }).catch(()=>null)
-  if (p && p.ownerUserId === req.user.id) return next()
-  return res.status(403).json({ error: "forbidden" })
-}
-
-// Проверка роли
+// Роль из списка
 export function ensureRole(...roles) {
   return (req, res, next) => {
     if (!req.user) return res.status(401).json({ error: "unauthorized" })
     if (!roles.includes(req.user.role)) return res.status(403).json({ error: "forbidden" })
     next()
   }
+}
+
+// Владелец провайдера или админ
+export async function ensureOwnerOrAdmin(req, res, next) {
+  if (!req.user) return res.status(401).json({ error: "unauthorized" })
+  if (req.user.role === ROLES.ADMIN) return next()
+  const prisma = req.ctx.prisma
+  const p = await prisma.provider.findUnique({ where: { id: req.params.id } }).catch(()=>null)
+  if (p && p.ownerUserId === req.user.id) return next()
+  return res.status(403).json({ error: "forbidden" })
 }

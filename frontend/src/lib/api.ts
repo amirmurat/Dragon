@@ -17,28 +17,46 @@ async function req(path: string, init: RequestInit = {}) {
   headers.set("Content-Type", "application/json")
   const t = getToken()
   if (t) headers.set("Authorization", "Bearer " + t)
+
   const res = await fetch(BASE + path, { ...init, headers })
-  if (!res.ok) throw new Error(await res.text())
-  return res.json()
+  const ct = res.headers.get("content-type") || ""
+  const isJson = ct.includes("application/json")
+  const body = isJson ? await res.json().catch(()=> ({})) : await res.text().catch(()=> "")
+
+  if (res.status === 401) {
+    // токен невалиден/нет прав -> выходим и на /login
+    setToken(null)
+    try { location.href = "/login" } catch {}
+    throw new Error("unauthorized")
+  }
+  if (!res.ok) {
+    const msg = (isJson ? (body?.error || body?.message) : body) || `HTTP ${res.status}`
+    throw new Error(String(msg))
+  }
+  return isJson ? body : JSON.parse(String(body||"{}"))
 }
 
 export const api = {
   // auth
-  register: (email: string, password: string) => req("/auth/register", { method: "POST", body: JSON.stringify({ email, password }) }),
-  login:    (email: string, password: string) => req("/auth/login",    { method: "POST", body: JSON.stringify({ email, password }) }),
+  register: (email: string, password: string) =>
+    req("/auth/register", { method: "POST", body: JSON.stringify({ email, password }) }),
+  login: (email: string, password: string) =>
+    req("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
   me: () => req("/auth/me"),
 
-  // public
+  // public (теперь после логина)
   providers: (opts?: { q?: string; service?: string; minPrice?: number; maxPrice?: number }) =>
     req("/providers" + qs(opts||{})),
   provider: (id: string) => req(`/providers/${id}`),
   providerServices: (id: string) => req(`/providers/${id}/services`),
-  availability: (id: string, date: string, serviceId?: string) => req(`/providers/${id}/availability?date=${date}${serviceId?`&serviceId=${serviceId}`:""}`),
+  availability: (id: string, date: string, serviceId?: string) =>
+    req(`/providers/${id}/availability?date=${date}${serviceId?`&serviceId=${serviceId}`:""}`),
 
   // appointments
   createAppointment: (payload: any) => req("/appointments", { method: "POST", body: JSON.stringify(payload) }),
   myBookings: () => req("/appointments?mine=true"),
-  changeAppointment: (id: string, action: "cancel"|"confirm") => req(`/appointments/${id}`, { method: "PATCH", body: JSON.stringify({ action }) }),
+  changeAppointment: (id: string, action: "cancel"|"confirm") =>
+    req(`/appointments/${id}`, { method: "PATCH", body: JSON.stringify({ action }) }),
 
   // owner
   myProvider: async () => {
@@ -47,16 +65,21 @@ export const api = {
     const t = getToken()
     if (t) headers.set("Authorization", "Bearer " + t)
     const res = await fetch(BASE + "/providers/me", { headers })
-    if (res.status === 404 || res.status === 401) return null
+    if (res.status === 404) return null
+    if (res.status === 401) { setToken(null); try{ location.href="/login" }catch{}; return null }
     if (!res.ok) throw new Error(await res.text())
     return res.json()
   },
-  createProvider: (data: {name:string, description?:string, address?:string}) => req("/providers", { method: "POST", body: JSON.stringify(data) }),
-  updateProvider: (id: string, data: any) => req(`/providers/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
-  createService: (id: string, data: {title:string, price:number, durationMin:number, isActive?:boolean}) => req(`/providers/${id}/services`, { method: "POST", body: JSON.stringify(data) }),
-  updateService: (id: string, sid: string, data: any) => req(`/providers/${id}/services/${sid}`, { method: "PATCH", body: JSON.stringify(data) }),
-  deleteService: (id: string, sid: string) => fetch(`${BASE}/providers/${id}/services/${sid}`, { method: "DELETE", headers: { "Authorization": "Bearer " + (getToken()||"") } }),
-  providerAppointments: (id: string, date: string) => req(`/providers/${id}/appointments?date=${date}`),
+  createProvider: (data: {name:string, description?:string, address?:string}) =>
+    req("/providers", { method: "POST", body: JSON.stringify(data) }),
+  updateProvider: (id: string, data: any) =>
+    req(`/providers/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  createService: (id: string, data: {title:string, price:number, durationMin:number, isActive?:boolean}) =>
+    req(`/providers/${id}/services`, { method: "POST", body: JSON.stringify(data) }),
+  updateService: (id: string, sid: string, data: any) =>
+    req(`/providers/${id}/services/${sid}`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteService: (id: string, sid: string) =>
+    req(`/providers/${id}/services/${sid}`, { method: "DELETE" }),
 
   // hours
   getWorkingHours: (id: string) => req(`/providers/${id}/working-hours`),
