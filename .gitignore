@@ -1,0 +1,28 @@
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.iml
+*.log
+
+# Node / React
+node_modules/
+dist/
+build/
+
+# Frontend artifacts
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.vite/
+frontend/.eslintcache
+
+# Backend artifacts
+backend/node_modules/
+backend/dev.db-journal
+
+# Env
+*.env
+frontend/.env
+backend/.env

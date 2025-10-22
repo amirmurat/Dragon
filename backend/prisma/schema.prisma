@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  passwordHash String
+  role         String        @default("CLIENT") // CLIENT | PROVIDER | ADMIN
+  createdAt    DateTime      @default(now())
+  appointments Appointment[] @relation("UserAppointments")
+}
+
+model Provider {
+  id           String         @id @default(uuid())
+  ownerUserId  String?
+  name         String
+  description  String?
+  address      String?
+  lat          Float?
+  lng          Float?
+  ratingAvg    Float?         @default(0)
+  services     Service[]
+  workingHours WorkingHours[]
+  timeOff      TimeOff[]
+  appointments Appointment[]  @relation("ProviderAppointments")
+}
+
+model Service {
+  id           String        @id @default(uuid())
+  providerId   String
+  provider     Provider      @relation(fields: [providerId], references: [id])
+  title        String
+  price        Float
+  durationMin  Int
+  isActive     Boolean       @default(true)
+  appointments Appointment[]
+}
+
+model WorkingHours {
+  id         String   @id @default(uuid())
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id])
+  weekday    Int // 1..7 (Mon..Sun)
+  startTime  String // "HH:mm"
+  endTime    String // "HH:mm"
+}
+
+model TimeOff {
+  id         String   @id @default(uuid())
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id])
+  fromDate   DateTime
+  toDate     DateTime
+}
+
+model Appointment {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation("UserAppointments", fields: [userId], references: [id])
+  providerId String
+  provider   Provider @relation("ProviderAppointments", fields: [providerId], references: [id])
+  serviceId  String?
+  service    Service? @relation(fields: [serviceId], references: [id])
+  startAt    DateTime
+  endAt      DateTime
+  status     String   @default("BOOKED") // BOOKED | CONFIRMED | CANCELLED | DONE
+  priceFinal Float?
+
+  @@unique([providerId, startAt])
+  @@index([providerId, startAt])
+  @@index([userId, startAt])
+}

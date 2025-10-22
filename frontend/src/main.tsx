@@ -1,0 +1,42 @@
+﻿import React from "react"
+import ReactDOM from "react-dom/client"
+import "./index.css"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { createBrowserRouter, RouterProvider } from "react-router-dom"
+import Home from "./pages/Home"
+import Login from "./pages/Login"
+import Register from "./pages/Register"
+import Providers from "./pages/Providers"
+import Provider from "./pages/Provider"
+import Bookings from "./pages/Bookings"
+import Dashboard from "./pages/Dashboard"
+import { Layout } from "./ui/Layout"
+import RequireAuth from "./ui/RequireAuth"
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Layout />,
+    errorElement: <div style={{padding:16}}>Page not found</div>,
+    children: [
+      { index: true, element: <Home /> },
+      { path: "login", element: <Login /> },
+      { path: "register", element: <Register /> },
+
+      // защищенные
+      { path: "providers", element: <RequireAuth><Providers /></RequireAuth> },
+      { path: "providers/:id", element: <RequireAuth><Provider /></RequireAuth> },
+      { path: "bookings", element: <RequireAuth><Bookings /></RequireAuth> },
+      { path: "dashboard", element: <RequireAuth><Dashboard /></RequireAuth> },
+    ]
+  }
+])
+
+const qc = new QueryClient()
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <QueryClientProvider client={qc}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  </React.StrictMode>
+)
