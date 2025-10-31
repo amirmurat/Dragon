@@ -11,6 +11,7 @@ import Provider from "./pages/Provider"
 import Bookings from "./pages/Bookings"
 import Dashboard from "./pages/Dashboard"
 import Admin from "./pages/Admin"
+import NotFound from "./pages/NotFound"
 import { Layout } from "./ui/Layout"
 import RequireAuth from "./ui/RequireAuth"
 
@@ -18,7 +19,7 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
-    errorElement: <div style={{padding:16}}>Page not found</div>,
+    errorElement: <NotFound />,
     children: [
       { index: true, element: <Home /> },
       { path: "login", element: <Login /> },

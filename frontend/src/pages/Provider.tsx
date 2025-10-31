@@ -1,73 +1,119 @@
-﻿import { useQuery, useMutation } from "@tanstack/react-query"
+﻿import { useParams } from "react-router-dom"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
-import { useParams } from "react-router-dom"
-import { useState } from "react"
-
-function fmt(iso: string){
-  const d = new Date(iso)
-  return d.toLocaleString()
-}
+import { useEffect, useMemo, useState } from "react"
+import { useTitle } from "@/ui/useTitle"
+import { toast } from "@/ui/Toast"
 
 export default function Provider(){
-  const { id = "" } = useParams()
-  const info = useQuery({ queryKey: ["provider", id], queryFn: ()=> api.provider(id) })
-  const services = useQuery({ queryKey: ["services", id], queryFn: ()=> api.providerServices(id) })
-
-  const [date, setDate] = useState("")
+  const { id="" } = useParams()
+  const qc = useQueryClient()
+  const info = useQuery({ queryKey:["provider", id], queryFn: ()=> api.provider(id) })
+  const services = useQuery({ queryKey:["services", id], queryFn: ()=> api.providerServices(id) })
+  const [date, setDate] = useState(()=> new Date().toISOString().slice(0,10))
   const [serviceId, setServiceId] = useState<string>("")
-  const [err, setErr] = useState<string| null>(null)
 
-  const avail = useQuery({
-    queryKey: ["avail", id, date, serviceId],
+  useTitle(info.data?.name ? `${info.data.name} — Zapis` : "Provider — Zapis")
+
+  const loadingInfo = info.isLoading
+  const loadingServices = services.isLoading
+
+  const selectedService = useMemo(()=> services.data?.find((s:any)=> s.id===serviceId), [services.data, serviceId])
+
+  const slots = useQuery({
+    queryKey: ["availability", id, date, serviceId||"none"],
     queryFn: ()=> api.availability(id, date, serviceId || undefined),
-    enabled: !!date
+    enabled: !!id && !!date,
   })
 
-  const create = useMutation({
-    mutationFn: (payload: any)=> api.createAppointment(payload),
-    onError: (e: any)=> {
-      const m = String(e?.message||"").toLowerCase()
-      if (m.includes("slot_taken")) setErr("This time is already booked.")
-      else if (m.includes("outside_working_hours")) setErr("Selected time is outside working hours.")
-      else if (m.includes("provider_time_off")) setErr("Provider is off on this day.")
-      else if (m.includes("cannot_book_own_provider")) setErr("You cannot book your own provider.")
-      else setErr("Booking failed.")
+  const book = useMutation({
+    mutationFn: async (startIso: string)=>{
+      const durMin = Number(selectedService?.durationMin || 30)
+      const start = new Date(startIso)
+      const end = new Date(start.getTime() + durMin*60000)
+      await api.createAppointment({ providerId: id, serviceId: serviceId || undefined, startAt: start.toISOString(), endAt: end.toISOString() })
     },
-    onSuccess: ()=> { setErr(null); alert("Booked! Check your bookings page.") }
+    onSuccess: ()=> { toast("Booking created","success"); qc.invalidateQueries({ queryKey: ["bookings"] }) },
+    onError: (e:any)=> toast(e?.message||"Failed to create booking","error")
   })
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">{info.data?.name || "Provider"}</h1>
-      {info.data?.address && <div className="text-sm text-gray-600">{info.data.address}</div>}
-      {info.data?.description && <div className="text-sm text-gray-600">{info.data.description}</div>}
+    <div className="grid md:grid-cols-3 gap-6">
+      <div className="md:col-span-2 space-y-3">
+        <div className="card card-pad">
+          {loadingInfo ? (
+            <>
+              <div className="h-7 w-64 skeleton" />
+              <div className="h-4 w-80 skeleton mt-2" />
+              <div className="h-4 w-72 skeleton mt-2" />
+            </>
+          ) : (
+            <>
+              <div className="font-display text-2xl font-semibold">{info.data?.name || "—"}</div>
+              {info.data?.address && <div className="text-[--muted]">{info.data.address}</div>}
+              {info.data?.description && <div className="mt-2">{info.data.description}</div>}
+            </>
+          )}
+        </div>
 
-      <div className="space-y-2">
-        <div className="font-medium">Service</div>
-        <select className="border px-2 py-2" value={serviceId} onChange={e=>setServiceId(e.target.value)}>
-          <option value="">— any —</option>
-          {(services.data ?? []).map((s:any)=> (
-            <option key={s.id} value={s.id}>{s.title} — {s.price} ({s.durationMin}m)</option>
-          ))}
-        </select>
+        <div className="card card-pad">
+          <div className="font-medium mb-2">Services</div>
+          <div className="grid md:grid-cols-2 gap-3">
+            {loadingServices && Array.from({length:4}).map((_,i)=> (
+              <div key={i} className="border rounded-2xl p-3">
+                <div className="h-5 w-40 skeleton" />
+                <div className="h-4 w-24 skeleton mt-2" />
+              </div>
+            ))}
+
+            {!loadingServices && services.data?.length===0 && (
+              <div className="text-sm text-[--muted]">No published services yet.</div>
+            )}
+
+            {!loadingServices && services.data?.map((s:any)=>(
+              <button key={s.id} className={"border rounded-2xl p-3 w-full text-left transition "+(serviceId===s.id?"bg-[--brand-50] border-[--brand-400]":"hover:bg-[--brand-50] border-[--brand-200]")} onClick={()=>setServiceId(s.id)}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium">{s.title}</div>
+                    <div className="text-sm text-[--muted]">{s.durationMin} min</div>
+                  </div>
+                  <div className="font-medium">{s.price} ₸</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <div className="font-medium">Date</div>
-        <input type="date" className="border px-2 py-2" value={date} onChange={e=>setDate(e.target.value)} />
-      </div>
-
-      {err && <div className="text-red-600 text-sm">{err}</div>}
-
-      <div className="grid gap-2">
-        {(avail.data ?? []).map((iso:string)=> (
-          <button key={iso} className="border rounded px-3 py-2 text-left hover:bg-gray-50"
-                  onClick={()=> create.mutate({ providerId: id, serviceId: serviceId || null, startAt: iso })}>
-            {fmt(iso)}
-          </button>
-        ))}
-        {date && (avail.data?.length===0) && <div className="text-sm text-gray-600">No slots for this date.</div>}
-      </div>
+      <aside className="space-y-3 md:sticky md:top-20 h-max">
+        <div className="card card-pad space-y-3">
+          <div className="font-medium">Booking</div>
+          <input type="date" className="input" value={date} onChange={e=>setDate(e.target.value)} />
+          <div className="text-sm text-[--muted]">Pick a service first, then a slot for the date.</div>
+          <div className="space-y-2">
+            {slots.isLoading && (
+              <div className="text-sm text-[--muted]">Loading slots…</div>
+            )}
+            {!slots.isLoading && (!slots.data || slots.data.length===0) && (
+              <div className="text-sm text-[--muted]">No available slots for the selected date.</div>
+            )}
+            {!slots.isLoading && (slots.data||[]).length>0 && (
+              <div className="grid grid-cols-2 gap-2">
+                {(slots.data as string[]).map((iso)=>{
+                  const d = new Date(iso)
+                  const label = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                  const disabled = !serviceId || book.isPending
+                  return (
+                    <button key={iso} className="btn btn-outline" onClick={()=> book.mutate(iso)} disabled={disabled}>
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </aside>
     </div>
   )
 }

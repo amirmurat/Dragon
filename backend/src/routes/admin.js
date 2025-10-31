@@ -41,6 +41,34 @@ adminRouter.patch("/users/:id", async (req, res) => {
   res.json(u)
 })
 
+// DELETE /admin/users/:id
+adminRouter.delete("/users/:id", async (req, res) => {
+  const prisma = req.ctx.prisma
+  const targetUserId = req.params.id
+  if (targetUserId === req.user.id) return res.status(400).json({ error: "cannot_delete_self" })
+
+  // Соберём связанные провайдеры пользователя
+  const providers = await prisma.provider.findMany({ where: { ownerUserId: targetUserId }, select: { id: true } })
+  const providerIds = providers.map(p => p.id)
+
+  await prisma.$transaction(async (tx) => {
+    if (providerIds.length) {
+      await tx.timeOff.deleteMany({ where: { providerId: { in: providerIds } } })
+      await tx.workingHours.deleteMany({ where: { providerId: { in: providerIds } } })
+      await tx.service.deleteMany({ where: { providerId: { in: providerIds } } })
+      await tx.appointment.deleteMany({ where: { providerId: { in: providerIds } } })
+      await tx.provider.deleteMany({ where: { id: { in: providerIds } } })
+    }
+    await tx.appointment.deleteMany({ where: { userId: targetUserId } })
+    await tx.user.delete({ where: { id: targetUserId } })
+  }).catch((e)=> {
+    return res.status(500).json({ error: "delete_user_failed", details: String(e?.message||e) })
+  })
+
+  if (res.headersSent) return
+  return res.status(204).end()
+})
+
 // GET /admin/providers?q=
 adminRouter.get("/providers", async (req, res) => {
   const prisma = req.ctx.prisma
@@ -60,6 +88,34 @@ adminRouter.get("/providers", async (req, res) => {
     select: { id: true, name: true, address: true, description: true, ownerUserId: true }
   })
   res.json(items)
+})
+
+// PATCH /admin/providers/:id  { name?, address?, description? }
+adminRouter.patch("/providers/:id", async (req, res) => {
+  const prisma = req.ctx.prisma
+  const { name, address, description } = req.body || {}
+  const p = await prisma.provider.update({ where: { id: req.params.id }, data: { name, address, description } }).catch(()=> null)
+  if (!p) return res.status(404).json({ error: "provider_not_found" })
+  res.json(p)
+})
+
+// DELETE /admin/providers/:id
+adminRouter.delete("/providers/:id", async (req, res) => {
+  const prisma = req.ctx.prisma
+  const providerId = req.params.id
+  const exists = await prisma.provider.findUnique({ where: { id: providerId }, select: { id: true } })
+  if (!exists) return res.status(204).end()
+  await prisma.$transaction(async (tx) => {
+    await tx.timeOff.deleteMany({ where: { providerId } })
+    await tx.workingHours.deleteMany({ where: { providerId } })
+    await tx.service.deleteMany({ where: { providerId } })
+    await tx.appointment.deleteMany({ where: { providerId } })
+    await tx.provider.delete({ where: { id: providerId } })
+  }).catch((e)=> {
+    return res.status(500).json({ error: "delete_provider_failed", details: String(e?.message||e) })
+  })
+  if (res.headersSent) return
+  return res.status(204).end()
 })
 
 // GET /admin/appointments?date=YYYY-MM-DD
@@ -91,4 +147,23 @@ adminRouter.get("/appointments", async (req, res) => {
     status: a.status,
     serviceTitle: a.service?.title ?? null,
   })))
+})
+
+// PATCH /admin/appointments/:id { status: "BOOKED"|"CONFIRMED"|"CANCELLED" }
+adminRouter.patch("/appointments/:id", async (req, res) => {
+  const prisma = req.ctx.prisma
+  const { status } = req.body || {}
+  if (!status || !["BOOKED","CONFIRMED","CANCELLED"].includes(status)) {
+    return res.status(400).json({ error: "invalid_status" })
+  }
+  const a = await prisma.appointment.update({ where: { id: req.params.id }, data: { status } }).catch(()=> null)
+  if (!a) return res.status(404).json({ error: "not_found" })
+  res.json(a)
+})
+
+// DELETE /admin/appointments/:id
+adminRouter.delete("/appointments/:id", async (req, res) => {
+  const prisma = req.ctx.prisma
+  await prisma.appointment.delete({ where: { id: req.params.id } }).catch(()=> null)
+  return res.status(204).end()
 })

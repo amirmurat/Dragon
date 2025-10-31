@@ -1,54 +1,64 @@
-﻿import { useQuery } from "@tanstack/react-query"
+﻿import { useState, useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import { Link } from "react-router-dom"
-import { useEffect, useState } from "react"
+import { toast } from "@/ui/Toast"
+import { useTitle } from "@/ui/useTitle"
 
 export default function Providers(){
+  useTitle("Providers — Zapis")
   const [q, setQ] = useState("")
-  const [service, setService] = useState("")
-  const [minPrice, setMinPrice] = useState<string>("")
-  const [maxPrice, setMaxPrice] = useState<string>("")
-
-  // простая задержка ввода
-  const [debounced, setDebounced] = useState({ q, service, minPrice, maxPrice })
-  useEffect(()=>{
-    const id = setTimeout(()=> setDebounced({ q, service, minPrice, maxPrice }), 300)
-    return ()=> clearTimeout(id)
-  }, [q, service, minPrice, maxPrice])
-
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["providers", debounced],
-    queryFn: ()=> api.providers({
-      q: debounced.q || undefined,
-      service: debounced.service || undefined,
-      minPrice: debounced.minPrice ? Number(debounced.minPrice) : undefined,
-      maxPrice: debounced.maxPrice ? Number(debounced.maxPrice) : undefined
-    })
+  const query = useQuery({
+    queryKey: ["providers", q],
+    queryFn: () => api.providers(q||undefined)
   })
+
+  const loading = query.isLoading
+  const error = query.error as any
+  const items = Array.isArray(query.data) ? query.data : (query.data?.items || [])
+
+  useEffect(()=>{
+    if (error) toast(error?.message || "Failed to load", "error")
+  }, [error])
 
   return (
     <div className="space-y-4">
-      <div className="text-xl font-semibold">Providers</div>
-
-      <div className="grid md:grid-cols-4 gap-2">
-        <input className="border px-3 py-2" placeholder="Search by name/address" value={q} onChange={e=>setQ(e.target.value)} />
-        <input className="border px-3 py-2" placeholder="Service contains..." value={service} onChange={e=>setService(e.target.value)} />
-        <input className="border px-3 py-2" placeholder="Min price" value={minPrice} onChange={e=>setMinPrice(e.target.value)} />
-        <input className="border px-3 py-2" placeholder="Max price" value={maxPrice} onChange={e=>setMaxPrice(e.target.value)} />
+      <div className="flex gap-2">
+        <input className="input" placeholder="Search by name/address/description" value={q} onChange={e=>setQ(e.target.value)} />
+        <button className="btn btn-primary" onClick={()=>query.refetch()} disabled={loading}>{loading? "Searching…" : "Search"}</button>
       </div>
 
-      {isLoading && <div>Loading…</div>}
-      {error && <div className="text-red-600 text-sm">Failed to load providers</div>}
+      {error && (
+        <div className="text-sm text-red-600">{error?.message || "Failed to load"}</div>
+      )}
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {(data ?? []).map((p:any)=>(
-          <Link key={p.id} to={`/providers/${p.id}`} className="border rounded p-3 block hover:bg-gray-50">
-            <div className="font-medium">{p.name}</div>
-            {p.address && <div className="text-sm text-gray-600">{p.address}</div>}
-            {p.description && <div className="text-sm text-gray-600 line-clamp-2">{p.description}</div>}
+      <div className="grid md:grid-cols-2 gap-4">
+        {loading && Array.from({length:4}).map((_,i)=> (
+          <div key={i} className="card card-pad">
+            <div className="h-5 w-40 skeleton" />
+            <div className="h-4 w-64 skeleton mt-2" />
+            <div className="h-4 w-56 skeleton mt-2" />
+          </div>
+        ))}
+
+        {!loading && items.length===0 && (
+          <div className="md:col-span-2 text-center text-[--muted]">
+            Nothing found. Try different search parameters.
+          </div>
+        )}
+
+        {!loading && items.map((p:any)=>(
+          <Link to={`/providers/${p.id}`} key={p.id} className="card card-pad hover:shadow-md transition">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="font-medium text-lg">{p.name}</div>
+                {p.address && <div className="text-sm text-[--muted]">{p.address}</div>}
+              </div>
+              {p.rating && <div className="badge">★ {p.rating.toFixed?.(1) || p.rating}</div>}
+            </div>
+            {p.description && <div className="text-sm mt-2 line-clamp-2">{p.description}</div>}
           </Link>
         ))}
-        {(data?.length===0) && <div className="text-sm text-gray-600">No providers match the filters.</div>}
       </div>
     </div>
   )

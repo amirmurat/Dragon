@@ -179,12 +179,13 @@ providersRouter.get("/:id/appointments", requireAuth, ensureOwnerOrAdmin, async 
   const from = new Date(date)
   const to = new Date(date); to.setUTCDate(to.getUTCDate() + 1)
   const items = await prisma.appointment.findMany({
-    where: { providerId: req.params.id, startAt: { gte: from, lt: to } },
+    where: { providerId: req.params.id, startAt: { gte: from, lt: to }, NOT: { status: "CANCELLED" } },
     orderBy: { startAt: "asc" },
-    include: { service: true }
+    include: { service: true, user: { select: { email: true } } }
   })
   res.json(items.map(a => ({
     id: a.id, startAt: a.startAt, endAt: a.endAt, status: a.status,
-    serviceTitle: a.service?.title ?? null
+    serviceTitle: a.service?.title ?? null,
+    userEmail: a.user?.email ?? null
   })))
 })

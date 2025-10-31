@@ -86,5 +86,9 @@ export const api = {
   setWorkingHours: (id: string, items: Array<{weekday:number,startTime:string,endTime:string}>) =>
     req(`/providers/${id}/working-hours`, { method: "PUT", body: JSON.stringify(items) }),
   setDefaultHours: (id: string) => req(`/providers/${id}/working-hours/default`, { method: "POST" }),
+
+  // provider day appointments (owner/admin)
+  providerAppointments: (id: string, date: string) =>
+    req(`/providers/${id}/appointments?date=${encodeURIComponent(date)}`),
 }
 export type API = typeof api
