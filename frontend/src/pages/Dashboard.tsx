@@ -1,6 +1,6 @@
 ﻿import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useTitle } from "@/ui/useTitle"
 import { toast } from "@/ui/Toast"
 
@@ -42,6 +42,31 @@ export default function Dashboard(){
     onSuccess: ()=> { toast("Working hours set","success"); qc.invalidateQueries({ queryKey: ["wh", provId] }) },
     onError: (e:any)=> toast(e?.message||"Failed to set hours", "error")
   })
+  const saveHours = useMutation({
+    mutationFn: (items: Array<{weekday:number,startTime:string,endTime:string}>)=> api.setWorkingHours(provId!, items),
+    onSuccess: ()=> { toast("Working hours saved","success"); qc.invalidateQueries({ queryKey: ["wh", provId] }) },
+    onError: (e:any)=> toast(e?.message||"Failed to save hours", "error")
+  })
+
+  const weekdayLabels = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
+  type DraftRow = { key: string; weekday: number; startTime: string; endTime: string }
+  const [hoursDraft, setHoursDraft] = useState<DraftRow[]>([])
+  useEffect(()=>{
+    const list = (hours.data ?? []).map((h:any, idx:number)=> ({ key: String(h.id||idx), weekday: Number(h.weekday), startTime: String(h.startTime), endTime: String(h.endTime) }))
+    setHoursDraft(list)
+  }, [hours.data])
+
+  function addRow(){
+    setHoursDraft(d=> [...d, { key: Math.random().toString(36).slice(2), weekday: 1, startTime: "10:00", endTime: "19:00" }])
+  }
+  function removeRow(key: string){ setHoursDraft(d=> d.filter(r=> r.key!==key)) }
+  function updateRow(key: string, patch: Partial<DraftRow>){ setHoursDraft(d=> d.map(r=> r.key===key? { ...r, ...patch } : r)) }
+  function clearAll(){ setHoursDraft([]) }
+  function saveAll(){
+    const items = hoursDraft.map(r=> ({ weekday: Number(r.weekday), startTime: r.startTime, endTime: r.endTime }))
+    if (items.some(it=> !/^\d{2}:\d{2}$/.test(it.startTime) || !/^\d{2}:\d{2}$/.test(it.endTime))) { toast("Use HH:MM format","error"); return }
+    saveHours.mutate(items)
+  }
 
   // Provider day appointments
   const appts = useQuery({ queryKey: ["provAppts", provId, date], queryFn: ()=> api.providerAppointments(provId!, date), enabled: !!provId && !!date })
@@ -105,15 +130,26 @@ export default function Dashboard(){
               <button className="btn btn-outline" onClick={()=>setDefault.mutate()} disabled={setDefault.isPending}>
                 Set default Mon–Fri 10:00–19:00
               </button>
+              <button className="btn btn-primary" onClick={addRow}>Add interval</button>
+              <button className="btn btn-outline" onClick={clearAll}>Clear</button>
+              <button className="btn btn-outline" onClick={saveAll} disabled={saveHours.isPending}>Save</button>
+            </div>
+            <div className="grid gap-2">
+              {hoursDraft.map(r=> (
+                <div key={r.key} className="flex items-center gap-2">
+                  <select className="input w-28" value={r.weekday} onChange={e=>updateRow(r.key, { weekday: Number(e.target.value) })}>
+                    {weekdayLabels.map((lab, idx)=> <option key={idx+1} value={idx+1}>{lab}</option>)}
+                  </select>
+                  <input className="input w-28" placeholder="HH:MM" value={r.startTime} onChange={e=>updateRow(r.key, { startTime: e.target.value })} />
+                  <span className="text-[--muted] text-sm">–</span>
+                  <input className="input w-28" placeholder="HH:MM" value={r.endTime} onChange={e=>updateRow(r.key, { endTime: e.target.value })} />
+                  <button className="btn btn-outline" onClick={()=>removeRow(r.key)}>Remove</button>
+                </div>
+              ))}
             </div>
             <div className="text-sm text-[--muted]">
-              {(hours.data ?? []).length === 0 ? "No working hours yet" : null}
+              {(hoursDraft ?? []).length === 0 ? "No working hours yet" : null}
             </div>
-            <ul className="list-disc pl-6">
-              {(hours.data ?? []).map((h:any)=>(
-                <li key={h.id}>weekday {h.weekday}: {h.startTime}–{h.endTime}</li>
-              ))}
-            </ul>
           </div>
 
           <div className="space-y-2 card card-pad">
