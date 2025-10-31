@@ -25,7 +25,7 @@ async function mustJson(res: Response){
 const ROLE_LABELS = { CLIENT: "User", PROVIDER: "Provider owner", ADMIN: "Administrator" }
 
 export default function Admin(){
-  useTitle("Admin — Zapis")
+  useTitle("Admin — MoonSalon")
   const [tab, setTab] = useState<"users"|"providers"|"appointments">("users")
 
   return (

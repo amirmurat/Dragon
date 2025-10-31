@@ -4,7 +4,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom"
 import { useTitle } from "@/ui/useTitle"
 
 export default function Login(){
-  useTitle("Log in — Zapis")
+  useTitle("Log in — MoonSalon")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [err, setErr] = useState<string| null>(null)

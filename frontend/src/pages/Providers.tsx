@@ -6,7 +6,7 @@ import { toast } from "@/ui/Toast"
 import { useTitle } from "@/ui/useTitle"
 
 export default function Providers(){
-  useTitle("Providers — Zapis")
+  useTitle("Providers — MoonSalon")
   const [q, setQ] = useState("")
   const query = useQuery({
     queryKey: ["providers", q],

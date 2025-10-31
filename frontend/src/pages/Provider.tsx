@@ -13,7 +13,7 @@ export default function Provider(){
   const [date, setDate] = useState(()=> new Date().toISOString().slice(0,10))
   const [serviceId, setServiceId] = useState<string>("")
 
-  useTitle(info.data?.name ? `${info.data.name} — Zapis` : "Provider — Zapis")
+  useTitle(info.data?.name ? `${info.data.name} — MoonSalon` : "Provider — MoonSalon")
 
   const loadingInfo = info.isLoading
   const loadingServices = services.isLoading
@@ -60,7 +60,7 @@ export default function Provider(){
           <div className="font-medium mb-2">Services</div>
           <div className="grid md:grid-cols-2 gap-3">
             {loadingServices && Array.from({length:4}).map((_,i)=> (
-              <div key={i} className="border rounded-2xl p-3">
+              <div key={i} className="border p-3">
                 <div className="h-5 w-40 skeleton" />
                 <div className="h-4 w-24 skeleton mt-2" />
               </div>
@@ -71,7 +71,7 @@ export default function Provider(){
             )}
 
             {!loadingServices && services.data?.map((s:any)=>(
-              <button key={s.id} className={"border rounded-2xl p-3 w-full text-left transition "+(serviceId===s.id?"bg-[--brand-50] border-[--brand-400]":"hover:bg-[--brand-50] border-[--brand-200]")} onClick={()=>setServiceId(s.id)}>
+              <button key={s.id} className={"border p-3 w-full text-left transition "+(serviceId===s.id?"bg-[--accent-50] border-[--brand-500]":"hover:bg-[--accent-50] border-[--accent-100]")} onClick={()=>setServiceId(s.id)}>
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-medium">{s.title}</div>

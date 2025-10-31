@@ -6,11 +6,11 @@ import { Toaster } from "./Toast"
 function Logo(){
   return (
     <Link to="/" className="flex items-center gap-2">
-      <span className="inline-flex h-8 w-8 items-center justify-center rounded-2xl"
-            style={{background:"linear-gradient(180deg,var(--brand-500),var(--brand-700))", color:"#fff"}}>
+      <span className="inline-flex h-8 w-8 items-center justify-center"
+            style={{background:"#103559", color:"#fff"}}>
         ♥
       </span>
-      <span className="font-display text-lg font-semibold tracking-wide">Zapis</span>
+      <span className="font-display text-lg font-semibold tracking-wide" style={{color:"#103559"}}>MoonSalon</span>
     </Link>
   )
 }
@@ -68,7 +68,7 @@ export function Layout() {
       </main>
 
       <footer className="border-t border-[--brand-100] py-6 text-center text-xs text-[--muted]">
-        © {new Date().getFullYear()} Zapis • beauty and self-care
+        © {new Date().getFullYear()} MoonSalon • beauty and self-care
       </footer>
     </div>
   )

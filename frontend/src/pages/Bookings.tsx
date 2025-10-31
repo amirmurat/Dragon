@@ -4,7 +4,7 @@ import { toast } from "@/ui/Toast"
 import { useTitle } from "@/ui/useTitle"
 
 export default function Bookings(){
-  useTitle("My bookings — Zapis")
+  useTitle("My bookings — MoonSalon")
   const qc = useQueryClient()
   const { data } = useQuery({ queryKey: ["bookings"], queryFn: ()=> api.myBookings() })
   const items = (data ?? []).filter((a:any)=> a.status !== "CANCELLED")

@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom"
 import { useTitle } from "@/ui/useTitle"
 
 export default function Register(){
-  useTitle("Sign up — Zapis")
+  useTitle("Sign up — MoonSalon")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [err, setErr] = useState<string| null>(null)

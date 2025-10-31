@@ -4,7 +4,7 @@ import { getToken, api } from "@/lib/api"
 import { useQuery } from "@tanstack/react-query"
 
 export default function Home(){
-  useTitle("Zapis — Home")
+  useTitle("MoonSalon — Home")
   const token = getToken()
   const me = useQuery({ queryKey: ["me"], queryFn: ()=> api.me(), enabled: !!token, retry: false })
   const role = me.data?.role as ("CLIENT"|"PROVIDER"|"ADMIN"|undefined)
@@ -12,10 +12,10 @@ export default function Home(){
 
   return (
     <div className="space-y-10">
-      <section className="card card-pad text-center" style={{background:"linear-gradient(180deg, var(--brand-50), transparent)"}}>
+      <section className="card card-pad text-center" style={{background:"linear-gradient(180deg, var(--accent-50), transparent)"}}>
         <div className="mx-auto max-w-3xl space-y-5">
           <h1 className="font-display text-3xl md:text-4xl font-bold leading-tight">
-            Your beauty — <span className="text-[--brand-700]">without waiting</span>
+            Your beauty — <span style={{color:"var(--brand-500)"}}>without waiting</span>
           </h1>
           <p className="text-[--muted]">
             Nails, hair, brows, massage — book top providers in a few clicks.
@@ -35,7 +35,7 @@ export default function Home(){
               </>
             )}
           </div>
-          <div className="text-xs text-[--muted]">100+ providers already with us</div>
+          <div className="text-xs text-[--muted]">100+ providers already with MoonSalon</div>
         </div>
       </section>
 
@@ -51,9 +51,9 @@ export default function Home(){
           <p className="text-sm text-[--muted]">Booking, confirmation and reminders — in one place.</p>
         </div>
         <div className="card card-pad space-y-2">
-          <div className="badge">Trusted</div>
-          <div className="font-medium">Verified providers</div>
-          <p className="text-sm text-[--muted]">Profiles, services and prices — transparent, no surprises.</p>
+          <div className="badge">Elegant</div>
+          <div className="font-medium">For women</div>
+          <p className="text-sm text-[--muted]">Clean design with soft blush accents.</p>
         </div>
       </section>
     </div>

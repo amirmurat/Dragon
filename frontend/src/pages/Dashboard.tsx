@@ -5,7 +5,7 @@ import { useTitle } from "@/ui/useTitle"
 import { toast } from "@/ui/Toast"
 
 export default function Dashboard(){
-  useTitle("Dashboard — Zapis")
+  useTitle("Dashboard — MoonSalon")
   const qc = useQueryClient()
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
@@ -17,7 +17,7 @@ export default function Dashboard(){
   const myProv = useQuery({ queryKey: ["myProvider"], queryFn: ()=> api.myProvider(), retry: false })
   const createProv = useMutation({
     mutationFn: ()=> api.createProvider({ name, description, address }),
-    onSuccess: ()=> { toast("Profile created","success"); qc.invalidateQueries({ queryKey: ["myProvider"] }) },
+    onSuccess: ()=> { toast("Profile created","success"); const k = { queryKey: ["myProvider"] } as any; (qc as any).invalidateQueries(k) },
     onError: (e:any)=> toast(e?.message||"Failed to create", "error")
   })
 

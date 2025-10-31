@@ -2,7 +2,7 @@ import { Link } from "react-router-dom"
 import { useTitle } from "@/ui/useTitle"
 
 export default function NotFound(){
-  useTitle("Page not found — Zapis")
+  useTitle("Page not found — MoonSalon")
   return (
     <div className="max-w-md mx-auto text-center">
       <div className="text-6xl font-display">404</div>
