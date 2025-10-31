@@ -1,8 +1,15 @@
 ﻿import { Link } from "react-router-dom"
 import { useTitle } from "@/ui/useTitle"
+import { getToken, api } from "@/lib/api"
+import { useQuery } from "@tanstack/react-query"
 
 export default function Home(){
   useTitle("Zapis — Home")
+  const token = getToken()
+  const me = useQuery({ queryKey: ["me"], queryFn: ()=> api.me(), enabled: !!token, retry: false })
+  const role = me.data?.role as ("CLIENT"|"PROVIDER"|"ADMIN"|undefined)
+  const isOwner = role === "PROVIDER" || role === "ADMIN"
+
   return (
     <div className="space-y-10">
       <section className="card card-pad text-center" style={{background:"linear-gradient(180deg, var(--brand-50), transparent)"}}>
@@ -14,9 +21,19 @@ export default function Home(){
             Nails, hair, brows, massage — book top providers in a few clicks.
             No calls or long chats.
           </p>
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             <Link to="/providers" className="btn btn-primary">Find a provider</Link>
-            <Link to="/login" className="btn btn-ghost">Log in</Link>
+            {!token ? (
+              <>
+                <Link to="/login" className="btn btn-ghost">Log in</Link>
+                <Link to="/register" className="btn btn-outline">Sign up</Link>
+              </>
+            ) : (
+              <>
+                <Link to="/bookings" className="btn btn-outline">My bookings</Link>
+                {isOwner && <Link to="/dashboard" className="btn btn-outline">Dashboard</Link>}
+              </>
+            )}
           </div>
           <div className="text-xs text-[--muted]">100+ providers already with us</div>
         </div>
