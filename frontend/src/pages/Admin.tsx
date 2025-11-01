@@ -4,6 +4,7 @@ import { toast } from "@/ui/Toast"
 
 type User = { id: string; email: string; role: "CLIENT"|"PROVIDER"|"ADMIN"; createdAt?: string }
 type Provider = { id: string; name: string; address?: string|null; description?: string|null; ownerUserId?: string|null }
+type Category = { id: string; name: string; slug: string; icon?: string|null; createdAt?: string }
 type Appointment = {
   id: string; providerId: string; userId: string;
   startAt: string; endAt: string; status: string; serviceTitle?: string|null
@@ -26,7 +27,7 @@ const ROLE_LABELS = { CLIENT: "User", PROVIDER: "Provider owner", ADMIN: "Admini
 
 export default function Admin(){
   useTitle("Admin — MoonSalon")
-  const [tab, setTab] = useState<"users"|"providers"|"appointments">("users")
+  const [tab, setTab] = useState<"users"|"providers"|"categories"|"appointments">("users")
 
   return (
     <div className="space-y-4">
@@ -35,11 +36,13 @@ export default function Admin(){
       <div className="flex gap-2">
         <button className={"btn btn-outline "+(tab==="users"?"navlink-active":"")} onClick={()=>setTab("users")}>Users</button>
         <button className={"btn btn-outline "+(tab==="providers"?"navlink-active":"")} onClick={()=>setTab("providers")}>Providers</button>
+        <button className={"btn btn-outline "+(tab==="categories"?"navlink-active":"")} onClick={()=>setTab("categories")}>Categories</button>
         <button className={"btn btn-outline "+(tab==="appointments"?"navlink-active":"")} onClick={()=>setTab("appointments")}>Appointments</button>
       </div>
 
       {tab==="users" && <UsersTab />}
       {tab==="providers" && <ProvidersTab />}
+      {tab==="categories" && <CategoriesTab />}
       {tab==="appointments" && <ApptsTab />}
     </div>
   )
@@ -222,6 +225,90 @@ function ProvidersTab(){
             <button className="btn btn-primary" onClick={save}>Save</button>
             <button className="btn btn-outline" onClick={()=>setEdit(null)}>Cancel</button>
           </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CategoriesTab(){
+  const [data, setData] = useState<Category[]>([])
+  const [loading, setLoading] = useState(false)
+  const [err, setErr] = useState<string|null>(null)
+  const [edit, setEdit] = useState<Category | "new" | null>(null)
+  const [name, setName] = useState("")
+  const [slug, setSlug] = useState("")
+  const [icon, setIcon] = useState("")
+
+  async function load(){
+    setLoading(true); setErr(null)
+    try{
+      const res = await fetch(`${BASE}/admin/categories`, { headers: authHeaders() })
+      const json = await mustJson(res)
+      setData(json)
+    }catch(e:any){
+      const msg = e?.message||"Failed to load"; setErr(msg); toast(msg, "error")
+    }finally{ setLoading(false) }
+  }
+  useEffect(()=>{ load() }, []) // eslint-disable-line
+
+  function openEdit(c: Category|"new"|null){ setEdit(c); setName(c && c!=="new" ? c.name : ""); setSlug(c && c!=="new" ? c.slug : ""); setIcon(c && c!=="new" ? c.icon : "") }
+
+  async function save(){
+    if (!name || !slug) { toast("Name and slug required","error"); return }
+    try{
+      const url = edit && edit!=="new" ? `${BASE}/admin/categories/${edit.id}` : `${BASE}/admin/categories`
+      const method = edit && edit!=="new" ? "PATCH" : "POST"
+      const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify({ name, slug, icon }) })
+      await mustJson(res); toast(edit!=="new" ? "Saved":"Created","success"); setEdit(null); await load()
+    }catch(e:any){ toast(e?.message||"Failed to save","error") }
+  }
+
+  async function remove(id: string){
+    if (!confirm("Delete category?")) return
+    try{
+      const res = await fetch(`${BASE}/admin/categories/${id}`, { method: "DELETE", headers: authHeaders() })
+      if (!res.ok) throw new Error(await res.text().catch(()=>`HTTP ${res.status}`))
+      toast("Category deleted","success"); await load()
+    }catch(e:any){ toast(e?.message||"Failed to delete","error") }
+  }
+
+  return (
+    <div className="space-y-3">
+      {err && <div className="text-red-600 text-sm">{err}</div>}
+      <div className="grid gap-2">
+        {data.map(c=>(
+          <div key={c.id} className="card card-pad flex items-center justify-between">
+            <div>
+              <div className="font-medium">{c.name} <span className="text-[--muted]">({c.slug})</span></div>
+              {c.icon && <div className="text-xs text-[--muted]">icon: {c.icon}</div>}
+            </div>
+            <div className="flex items-center gap-2">
+              <button className="btn btn-outline" onClick={()=>openEdit(c)}>Edit</button>
+              <button className="btn btn-outline" onClick={()=>remove(c.id)}>Delete</button>
+            </div>
+          </div>
+        ))}
+        {(!loading && data.length===0) && <div className="text-sm text-[--muted]">No categories yet.</div>}
+      </div>
+
+      {edit !== null ? (
+        <div className="card card-pad space-y-2">
+          <div className="font-medium">{edit === "new" ? "Create category" : "Edit category"}</div>
+          <label className="text-sm text-[--muted]">Name</label>
+          <input className="input" placeholder="Makeup" value={name} onChange={e=>setName(e.target.value)} />
+          <label className="text-sm text-[--muted]">Slug</label>
+          <input className="input" placeholder="makeup" value={slug} onChange={e=>setSlug(e.target.value)} />
+          <label className="text-sm text-[--muted]">Icon (emoji or URL)</label>
+          <input className="input" placeholder="💄 or https://..." value={icon} onChange={e=>setIcon(e.target.value)} />
+          <div className="flex gap-2">
+            <button className="btn btn-primary" onClick={save}>Save</button>
+            <button className="btn btn-outline" onClick={()=>setEdit(null)}>Cancel</button>
+          </div>
+        </div>
+      ) : (
+        <div className="card card-pad">
+          <button className="btn btn-primary" onClick={()=>openEdit("new")}>Create category</button>
         </div>
       )}
     </div>

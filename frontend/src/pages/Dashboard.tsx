@@ -26,12 +26,14 @@ export default function Dashboard(){
 
   // Services
   const services = useQuery({ queryKey: ["myServices", provId], queryFn: ()=> api.providerServices(provId!), enabled: !!provId })
+  const categories = useQuery({ queryKey: ["categories"], queryFn: ()=> api.categories() })
   const [svcTitle, setSvcTitle] = useState("")
   const [svcPrice, setSvcPrice] = useState(0)
   const [svcDur, setSvcDur] = useState(30)
+  const [svcCategoryId, setSvcCategoryId] = useState<string>("")
   const createSvc = useMutation({
-    mutationFn: ()=> api.createService(provId!, { title: svcTitle, price: Number(svcPrice), durationMin: Number(svcDur) }),
-    onSuccess: ()=> { setSvcTitle(""); setSvcPrice(0); setSvcDur(30); toast("Service added","success"); qc.invalidateQueries({ queryKey: ["myServices", provId] }) },
+    mutationFn: ()=> api.createService(provId!, { title: svcTitle, price: Number(svcPrice), durationMin: Number(svcDur), categoryId: svcCategoryId || undefined }),
+    onSuccess: ()=> { setSvcTitle(""); setSvcPrice(0); setSvcDur(30); setSvcCategoryId(""); toast("Service added","success"); qc.invalidateQueries({ queryKey: ["myServices", provId] }) },
     onError: (e:any)=> toast(e?.message||"Failed to add service", "error")
   })
 
@@ -104,6 +106,13 @@ export default function Dashboard(){
                 <input id="svc-title" className="input" placeholder="Classic manicure" value={svcTitle} onChange={e=>setSvcTitle(e.target.value)} />
               </div>
               <div>
+                <label className="text-sm text-[--muted]" htmlFor="svc-category">Category</label>
+                <select id="svc-category" className="input" value={svcCategoryId} onChange={e=>setSvcCategoryId(e.target.value)}>
+                  <option value="">None</option>
+                  {categories.data?.map((c:any)=> <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div>
                 <label className="text-sm text-[--muted]" htmlFor="svc-price">Price</label>
                 <input id="svc-price" className="input w-28" placeholder="5000" type="number" value={svcPrice} onChange={e=>setSvcPrice(Number(e.target.value))} />
               </div>
@@ -118,7 +127,7 @@ export default function Dashboard(){
             <div className="grid gap-2">
               {services.data?.map((s:any)=> (
                 <div key={s.id} className="card card-pad flex items-center justify-between">
-                  <div>{s.title} — {s.price} ({s.durationMin}m)</div>
+                  <div>{s.title} {s.category && <span className="badge">{s.category.name}</span>} — {s.price} ({s.durationMin}m)</div>
                 </div>
               ))}
             </div>

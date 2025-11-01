@@ -31,10 +31,21 @@ model Provider {
   appointments Appointment[]  @relation("ProviderAppointments")
 }
 
+model Category {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  slug      String    @unique
+  icon      String?
+  services  Service[]
+  createdAt DateTime  @default(now())
+}
+
 model Service {
   id           String        @id @default(uuid())
   providerId   String
   provider     Provider      @relation(fields: [providerId], references: [id])
+  categoryId   String?
+  category     Category?     @relation(fields: [categoryId], references: [id])
   title        String
   price        Float
   durationMin  Int

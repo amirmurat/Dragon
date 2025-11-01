@@ -74,7 +74,7 @@ export const api = {
     req("/providers", { method: "POST", body: JSON.stringify(data) }),
   updateProvider: (id: string, data: any) =>
     req(`/providers/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
-  createService: (id: string, data: {title:string, price:number, durationMin:number, isActive?:boolean}) =>
+  createService: (id: string, data: {title:string, price:number, durationMin:number, isActive?:boolean, categoryId?:string}) =>
     req(`/providers/${id}/services`, { method: "POST", body: JSON.stringify(data) }),
   updateService: (id: string, sid: string, data: any) =>
     req(`/providers/${id}/services/${sid}`, { method: "PATCH", body: JSON.stringify(data) }),
@@ -90,5 +90,8 @@ export const api = {
   // provider day appointments (owner/admin)
   providerAppointments: (id: string, date: string) =>
     req(`/providers/${id}/appointments?date=${encodeURIComponent(date)}`),
+
+  // categories
+  categories: () => req("/providers/categories"),
 }
 export type API = typeof api

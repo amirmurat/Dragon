@@ -167,3 +167,37 @@ adminRouter.delete("/appointments/:id", async (req, res) => {
   await prisma.appointment.delete({ where: { id: req.params.id } }).catch(()=> null)
   return res.status(204).end()
 })
+
+// GET /admin/categories
+adminRouter.get("/categories", async (req, res) => {
+  const prisma = req.ctx.prisma
+  const items = await prisma.category.findMany({ orderBy: { name: "asc" } })
+  res.json(items)
+})
+
+// POST /admin/categories { name, slug, icon? }
+adminRouter.post("/categories", async (req, res) => {
+  const prisma = req.ctx.prisma
+  const { name, slug, icon } = req.body || {}
+  if (!name || !slug) return res.status(400).json({ error: "name_and_slug_required" })
+  const cat = await prisma.category.create({ data: { name, slug, icon: icon || null } }).catch(()=> null)
+  if (!cat) return res.status(400).json({ error: "slug_already_exists" })
+  res.status(201).json(cat)
+})
+
+// PATCH /admin/categories/:id { name?, slug?, icon? }
+adminRouter.patch("/categories/:id", async (req, res) => {
+  const prisma = req.ctx.prisma
+  const { name, slug, icon } = req.body || {}
+  const cat = await prisma.category.update({ where: { id: req.params.id }, data: { name, slug, icon } }).catch(()=> null)
+  if (!cat) return res.status(404).json({ error: "category_not_found" })
+  res.json(cat)
+})
+
+// DELETE /admin/categories/:id
+adminRouter.delete("/categories/:id", async (req, res) => {
+  const prisma = req.ctx.prisma
+  await prisma.service.updateMany({ where: { categoryId: req.params.id }, data: { categoryId: null } })
+  await prisma.category.delete({ where: { id: req.params.id } }).catch(()=> null)
+  return res.status(204).end()
+})

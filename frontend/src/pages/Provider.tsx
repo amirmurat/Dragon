@@ -74,7 +74,7 @@ export default function Provider(){
               <button key={s.id} className={"border p-3 w-full text-left transition "+(serviceId===s.id?"bg-[--accent-50] border-[--brand-500]":"hover:bg-[--accent-50] border-[--accent-100]")} onClick={()=>setServiceId(s.id)}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-medium">{s.title}</div>
+                    <div className="font-medium">{s.title} {s.category && <span className="badge">{s.category.name}</span>}</div>
                     <div className="text-sm text-[--muted]">{s.durationMin} min</div>
                   </div>
                   <div className="font-medium">{s.price} ₸</div>

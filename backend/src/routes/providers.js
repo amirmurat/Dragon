@@ -45,6 +45,13 @@ providersRouter.get("/me", requireAuth, async (req, res) => {
   res.json(p)
 })
 
+// ----- GET categories (public, after login) -----
+providersRouter.get("/categories", requireAuth, async (req, res) => {
+  const prisma = req.ctx.prisma
+  const cats = await prisma.category.findMany({ orderBy: { name: "asc" } })
+  res.json(cats)
+})
+
 // ----- CREATE provider (только PROVIDER/ADMIN) -----
 providersRouter.post("/", requireAuth, ensureRole("PROVIDER","ADMIN"), async (req, res) => {
   const prisma = req.ctx.prisma
@@ -71,7 +78,8 @@ providersRouter.get("/:id/services", requireAuth, async (req, res) => {
   const prisma = req.ctx.prisma
   const list = await prisma.service.findMany({
     where: { providerId: req.params.id, isActive: true },
-    orderBy: { title: "asc" }
+    orderBy: { title: "asc" },
+    include: { category: { select: { id: true, name: true, slug: true } } }
   })
   res.json(list)
 })
@@ -85,9 +93,9 @@ providersRouter.patch("/:id", requireAuth, ensureOwnerOrAdmin, async (req, res) 
 
 providersRouter.post("/:id/services", requireAuth, ensureOwnerOrAdmin, async (req, res) => {
   const prisma = req.ctx.prisma
-  const { title, price, durationMin, isActive = true } = req.body || {}
+  const { title, price, durationMin, isActive = true, categoryId } = req.body || {}
   if (!title || !price || !durationMin) return res.status(400).json({ error: "title, price, durationMin required" })
-  const s = await prisma.service.create({ data: { providerId: req.params.id, title, price, durationMin, isActive } })
+  const s = await prisma.service.create({ data: { providerId: req.params.id, title, price, durationMin, isActive, categoryId: categoryId || null } })
   res.status(201).json(s)
 })
 
