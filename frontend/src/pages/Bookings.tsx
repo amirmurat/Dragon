@@ -18,18 +18,18 @@ export default function Bookings(){
       <div className="text-xl font-semibold">My bookings</div>
       <div className="grid gap-2">
         {items.length===0 && (
-          <div className="text-sm text-gray-600">No active bookings yet.</div>
+          <div className="text-sm text-[--muted]">No active bookings yet.</div>
         )}
         {items.map((a: any)=>(
-          <div key={a.id} className="border rounded p-3 flex items-center gap-3">
+          <div key={a.id} className="card card-pad flex items-center gap-3">
             <div className="flex-1">
               <div className="font-medium">{a.providerName}</div>
               <div className="text-sm">{new Date(a.startAt).toLocaleString()} — {new Date(a.endAt).toLocaleString()}</div>
-              {a.serviceTitle && <div className="text-sm text-gray-600">{a.serviceTitle}</div>}
-              <div className="text-xs text-gray-600">status: {a.status}</div>
+              {a.serviceTitle && <div className="text-sm text-[--muted]">{a.serviceTitle}</div>}
+              <div className="text-xs text-[--muted]">status: {a.status}</div>
             </div>
             {a.status !== "CANCELLED" && (
-              <button className="px-2 py-1 border rounded" onClick={()=>cancel.mutate(a.id)} disabled={cancel.isPending}>Cancel</button>
+              <button className="btn btn-outline" onClick={()=>cancel.mutate(a.id)} disabled={cancel.isPending}>Cancel</button>
             )}
           </div>
         ))}

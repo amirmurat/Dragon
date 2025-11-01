@@ -45,7 +45,7 @@ export const api = {
   me: () => req("/auth/me"),
 
   // public (теперь после логина)
-  providers: (opts?: { q?: string; service?: string; minPrice?: number; maxPrice?: number }) =>
+  providers: (opts?: { q?: string; service?: string; categoryId?: string; minPrice?: number; maxPrice?: number }) =>
     req("/providers" + qs(opts||{})),
   provider: (id: string) => req(`/providers/${id}`),
   providerServices: (id: string) => req(`/providers/${id}/services`),

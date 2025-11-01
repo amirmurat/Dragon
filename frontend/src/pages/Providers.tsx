@@ -8,9 +8,13 @@ import { useTitle } from "@/ui/useTitle"
 export default function Providers(){
   useTitle("Providers — MoonSalon")
   const [q, setQ] = useState("")
+  const [categoryId, setCategoryId] = useState<string>("")
+  
+  const categories = useQuery({ queryKey: ["categories"], queryFn: () => api.categories() })
+  
   const query = useQuery({
-    queryKey: ["providers", q],
-    queryFn: () => api.providers(q||undefined)
+    queryKey: ["providers", q, categoryId],
+    queryFn: () => api.providers({ q: q || undefined, categoryId: categoryId || undefined })
   })
 
   const loading = query.isLoading
@@ -25,6 +29,14 @@ export default function Providers(){
     <div className="space-y-4">
       <div className="flex gap-2">
         <input className="input" placeholder="Search by name/address/description" value={q} onChange={e=>setQ(e.target.value)} />
+        {categories.data && (
+          <select className="input w-48" value={categoryId} onChange={e=>setCategoryId(e.target.value)}>
+            <option value="">All categories</option>
+            {categories.data.map((c:any) => (
+              <option key={c.id} value={c.id}>{c.icon || ""} {c.name}</option>
+            ))}
+          </select>
+        )}
         <button className="btn btn-primary" onClick={()=>query.refetch()} disabled={loading}>{loading? "Searching…" : "Search"}</button>
       </div>
 

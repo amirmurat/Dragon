@@ -71,7 +71,7 @@ export default function Provider(){
             )}
 
             {!loadingServices && services.data?.map((s:any)=>(
-              <button key={s.id} className={"border p-3 w-full text-left transition "+(serviceId===s.id?"bg-[--accent-50] border-[--brand-500]":"hover:bg-[--accent-50] border-[--accent-100]")} onClick={()=>setServiceId(s.id)}>
+              <button key={s.id} type="button" className={"border p-3 w-full text-left cursor-pointer transition-all duration-200 "+(serviceId===s.id?"bg-[--accent-50] border-[--brand-500] shadow-md":"hover:bg-[--accent-50] hover:shadow-md border-[--accent-100]")} onClick={()=>setServiceId(s.id)}>
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-medium">{s.title} {s.category && <span className="badge">{s.category.name}</span>}</div>

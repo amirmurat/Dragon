@@ -8,6 +8,7 @@ providersRouter.get("/", requireAuth, async (req, res) => {
   const prisma = req.ctx.prisma
   const q        = (req.query.q || "").toString().trim()
   const serviceQ = (req.query.service || "").toString().trim()
+  const categoryId = req.query.categoryId || null
   const minPrice = req.query.minPrice ? Number(req.query.minPrice) : null
   const maxPrice = req.query.maxPrice ? Number(req.query.maxPrice) : null
 
@@ -21,6 +22,7 @@ providersRouter.get("/", requireAuth, async (req, res) => {
   }
   const svc = {}
   if (serviceQ) svc.title = { contains: serviceQ }
+  if (categoryId) svc.categoryId = categoryId
   if (minPrice != null || maxPrice != null) {
     svc.price = {}
     if (minPrice != null) svc.price.gte = minPrice

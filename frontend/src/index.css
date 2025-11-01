@@ -23,17 +23,17 @@ html { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetic
 .font-display { font-family: Poppins, Inter, system-ui, sans-serif; }
 
 /* Primitives */
-.btn { @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium transition shadow-sm disabled:opacity-50 disabled:pointer-events-none; color: var(--ink); border-radius: 0; }
+.btn { @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium cursor-pointer transition shadow-sm disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed; color: var(--ink); border-radius: 0; }
 .btn-primary {
   @apply text-white;
   background: linear-gradient(180deg, var(--brand-500), var(--brand-600));
   box-shadow: 0 4px 14px rgba(16,53,89,0.25);
 }
-.btn-primary:hover{ filter: brightness(1.03); }
+.btn-primary:hover:not(:disabled){ filter: brightness(1.03); }
 .btn-ghost { @apply bg-transparent border border-transparent; color: var(--ink); }
-.btn-ghost:hover{ background: var(--accent-50); }
+.btn-ghost:hover:not(:disabled){ background: var(--accent-50); }
 .btn-outline { @apply border; background: var(--card); border-color: var(--brand-500); color: var(--ink); }
-.btn-outline:hover { border-color: var(--brand-700); }
+.btn-outline:hover:not(:disabled){ border-color: var(--brand-700); }
 
 .card { @apply shadow-sm border; background: var(--card); border-color: var(--accent-100); border-radius: 0; }
 .card-pad { @apply p-4 md:p-6; }
