@@ -8,12 +8,15 @@ datasource db {
 }
 
 model User {
-  id           String        @id @default(uuid())
-  email        String        @unique
-  passwordHash String
-  role         String        @default("CLIENT") // CLIENT | PROVIDER | ADMIN
-  createdAt    DateTime      @default(now())
-  appointments Appointment[] @relation("UserAppointments")
+  id               String        @id @default(uuid())
+  email            String        @unique
+  passwordHash     String
+  role             String        @default("CLIENT") // CLIENT | PROVIDER | ADMIN
+  emailConfirmed   Boolean       @default(false)
+  emailVerifyToken String?       @unique
+  emailVerifySent  DateTime?
+  createdAt        DateTime      @default(now())
+  appointments     Appointment[] @relation("UserAppointments")
 }
 
 model Provider {

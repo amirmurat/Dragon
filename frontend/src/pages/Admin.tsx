@@ -33,11 +33,11 @@ export default function Admin(){
     <div className="space-y-4">
       <div className="text-xl font-semibold">Admin</div>
 
-      <div className="flex gap-2">
-        <button className={"btn btn-outline "+(tab==="users"?"navlink-active":"")} onClick={()=>setTab("users")}>Users</button>
-        <button className={"btn btn-outline "+(tab==="providers"?"navlink-active":"")} onClick={()=>setTab("providers")}>Providers</button>
-        <button className={"btn btn-outline "+(tab==="categories"?"navlink-active":"")} onClick={()=>setTab("categories")}>Categories</button>
-        <button className={"btn btn-outline "+(tab==="appointments"?"navlink-active":"")} onClick={()=>setTab("appointments")}>Appointments</button>
+      <div className="flex flex-wrap gap-2">
+        <button className={"btn btn-outline text-xs "+(tab==="users"?"navlink-active":"")} onClick={()=>setTab("users")}>Users</button>
+        <button className={"btn btn-outline text-xs "+(tab==="providers"?"navlink-active":"")} onClick={()=>setTab("providers")}>Providers</button>
+        <button className={"btn btn-outline text-xs "+(tab==="categories"?"navlink-active":"")} onClick={()=>setTab("categories")}>Categories</button>
+        <button className={"btn btn-outline text-xs "+(tab==="appointments"?"navlink-active":"")} onClick={()=>setTab("appointments")}>Bookings</button>
       </div>
 
       {tab==="users" && <UsersTab />}
@@ -98,37 +98,39 @@ function UsersTab(){
 
   return (
     <div className="space-y-3">
-      <div className="grid md:grid-cols-3 gap-2">
-        <input className="input" placeholder="Search by email" value={q} onChange={e=>setQ(e.target.value)} />
-        <select className="input" value={role} onChange={e=>setRole(e.target.value as any)}>
+      <div className="grid sm:grid-cols-3 gap-2">
+        <input className="input sm:col-span-1" placeholder="Search by email" value={q} onChange={e=>setQ(e.target.value)} />
+        <select className="input sm:col-span-1" value={role} onChange={e=>setRole(e.target.value as any)}>
           <option value="">Any role</option>
           <option value="CLIENT">User</option>
           <option value="PROVIDER">Provider owner</option>
           <option value="ADMIN">Administrator</option>
         </select>
-        <button className="btn btn-outline" onClick={load} disabled={loading}>{loading?"…":"Apply"}</button>
+        <button className="btn btn-outline sm:col-span-1 whitespace-nowrap" onClick={load} disabled={loading}>{loading?"…":"Apply"}</button>
       </div>
 
       {err && <div className="text-red-600 text-sm">{err}</div>}
 
       <div className="grid gap-2">
         {data.map(u=>(
-          <div key={u.id} className="card card-pad flex items-center justify-between">
-            <div className="text-sm">
-              <div className="font-medium">{u.email}</div>
-              <div className="text-[--muted]">role: {ROLE_LABELS[u.role]}</div>
-            </div>
-            <div className="flex items-center gap-2">
-              {( ["CLIENT","PROVIDER","ADMIN"] as const).map(r=>(
-                <button key={r}
-                  className={"btn btn-outline text-sm "+(u.role===r?"navlink-active":"")}
-                  onClick={()=> changeRole(u.id, r)}
-                  disabled={u.role===r}
-                >
-                  {ROLE_LABELS[r]}
-                </button>
-              ))}
-              <button className="btn btn-outline" onClick={()=>removeUser(u.id)}>Delete</button>
+          <div key={u.id} className="card card-pad">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="text-sm">
+                <div className="font-medium">{u.email}</div>
+                <div className="text-[--muted]">role: {ROLE_LABELS[u.role]}</div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {( ["CLIENT","PROVIDER","ADMIN"] as const).map(r=>(
+                  <button key={r}
+                    className={"btn btn-outline text-xs "+(u.role===r?"navlink-active":"")}
+                    onClick={()=> changeRole(u.id, r)}
+                    disabled={u.role===r}
+                  >
+                    {ROLE_LABELS[r]}
+                  </button>
+                ))}
+                <button className="btn btn-outline text-xs px-2" onClick={()=>removeUser(u.id)}>×</button>
+              </div>
             </div>
           </div>
         ))}
@@ -188,10 +190,9 @@ function ProvidersTab(){
 
   return (
     <div className="space-y-3">
-      <div className="grid md:grid-cols-3 gap-2">
-        <input className="input" placeholder="Search by name/address/desc" value={q} onChange={e=>setQ(e.target.value)} />
-        <div />
-        <button className="btn btn-outline" onClick={load} disabled={loading}>{loading?"…":"Apply"}</button>
+      <div className="flex flex-col sm:flex-row gap-2">
+        <input className="input flex-1" placeholder="Search by name/address/desc" value={q} onChange={e=>setQ(e.target.value)} />
+        <button className="btn btn-outline whitespace-nowrap" onClick={load} disabled={loading}>{loading?"…":"Apply"}</button>
       </div>
 
       {err && <div className="text-red-600 text-sm">{err}</div>}
@@ -199,15 +200,15 @@ function ProvidersTab(){
       <div className="grid gap-2">
         {data.map(p=>(
           <div key={p.id} className="card card-pad">
-            <div className="flex items-start justify-between gap-3">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+              <div className="flex-1">
                 <div className="font-medium">{p.name}</div>
                 {p.address && <div className="text-sm text-[--muted]">{p.address}</div>}
                 {p.description && <div className="text-sm text-[--muted]">{p.description}</div>}
               </div>
               <div className="flex items-center gap-2">
-                <button className="btn btn-outline" onClick={()=>openEdit(p)}>Edit</button>
-                <button className="btn btn-outline" onClick={()=>remove(p.id)}>Delete</button>
+                <button className="btn btn-outline text-xs" onClick={()=>openEdit(p)}>Edit</button>
+                <button className="btn btn-outline text-xs px-2" onClick={()=>remove(p.id)}>×</button>
               </div>
             </div>
           </div>
@@ -278,14 +279,16 @@ function CategoriesTab(){
       {err && <div className="text-red-600 text-sm">{err}</div>}
       <div className="grid gap-2">
         {data.map(c=>(
-          <div key={c.id} className="card card-pad flex items-center justify-between">
-            <div>
-              <div className="font-medium">{c.name} <span className="text-[--muted]">({c.slug})</span></div>
-              {c.icon && <div className="text-xs text-[--muted]">icon: {c.icon}</div>}
-            </div>
-            <div className="flex items-center gap-2">
-              <button className="btn btn-outline" onClick={()=>openEdit(c)}>Edit</button>
-              <button className="btn btn-outline" onClick={()=>remove(c.id)}>Delete</button>
+          <div key={c.id} className="card card-pad">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div>
+                <div className="font-medium">{c.name} <span className="text-[--muted]">({c.slug})</span></div>
+                {c.icon && <div className="text-xs text-[--muted]">icon: {c.icon}</div>}
+              </div>
+              <div className="flex items-center gap-2">
+                <button className="btn btn-outline text-xs" onClick={()=>openEdit(c)}>Edit</button>
+                <button className="btn btn-outline text-xs px-2" onClick={()=>remove(c.id)}>×</button>
+              </div>
             </div>
           </div>
         ))}
@@ -355,9 +358,9 @@ function ApptsTab(){
 
   return (
     <div className="space-y-3">
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <input type="date" className="input" value={date} onChange={e=>setDate(e.target.value)} />
-        <button className="btn btn-outline" onClick={load} disabled={loading}>{loading?"…":"Apply"}</button>
+        <button className="btn btn-outline whitespace-nowrap" onClick={load} disabled={loading}>{loading?"…":"Apply"}</button>
       </div>
 
       {err && <div className="text-red-600 text-sm">{err}</div>}
@@ -365,13 +368,13 @@ function ApptsTab(){
       <div className="grid gap-2">
         {data.map(a=>(
           <div key={a.id} className="card card-pad">
-            <div className="font-medium">{pretty(a.startAt)} — {a.serviceTitle||"—"}</div>
-            <div className="text-sm text-[--muted]">provider: {a.providerId} · user: {a.userId} · status: {a.status}</div>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="font-medium break-all">{pretty(a.startAt)} — {a.serviceTitle||"—"}</div>
+            <div className="text-sm text-[--muted] break-all">provider: {a.providerId} · user: {a.userId} · status: {a.status}</div>
+            <div className="flex flex-wrap items-center gap-2 mt-2">
               {(["BOOKED","CONFIRMED","CANCELLED"]).map(s=> (
-                <button key={s} className="btn btn-outline" onClick={()=>setStatus(a.id, s)} disabled={a.status===s}>{s}</button>
+                <button key={s} className="btn btn-outline text-xs" onClick={()=>setStatus(a.id, s)} disabled={a.status===s}>{s}</button>
               ))}
-              <button className="btn btn-outline" onClick={()=>remove(a.id)}>Delete</button>
+              <button className="btn btn-outline text-xs px-2" onClick={()=>remove(a.id)}>×</button>
             </div>
           </div>
         ))}

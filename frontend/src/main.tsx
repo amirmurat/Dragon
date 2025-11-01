@@ -6,6 +6,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom"
 import Home from "./pages/Home"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
+import Verify from "./pages/Verify"
 import Providers from "./pages/Providers"
 import Provider from "./pages/Provider"
 import Bookings from "./pages/Bookings"
@@ -24,6 +25,7 @@ const router = createBrowserRouter([
       { index: true, element: <Home /> },
       { path: "login", element: <Login /> },
       { path: "register", element: <Register /> },
+      { path: "verify", element: <Verify /> },
 
       // защищенные
       { path: "providers", element: <RequireAuth><Providers /></RequireAuth> },

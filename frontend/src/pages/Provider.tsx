@@ -38,7 +38,7 @@ export default function Provider(){
   })
 
   return (
-    <div className="grid md:grid-cols-3 gap-6">
+    <div className="grid md:grid-cols-3 gap-4 md:gap-6">
       <div className="md:col-span-2 space-y-3">
         <div className="card card-pad">
           {loadingInfo ? (
@@ -58,7 +58,7 @@ export default function Provider(){
 
         <div className="card card-pad">
           <div className="font-medium mb-2">Services</div>
-          <div className="grid md:grid-cols-2 gap-3">
+          <div className="grid sm:grid-cols-2 gap-3">
             {loadingServices && Array.from({length:4}).map((_,i)=> (
               <div key={i} className="border p-3">
                 <div className="h-5 w-40 skeleton" />

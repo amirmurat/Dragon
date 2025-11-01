@@ -24,14 +24,15 @@ export default function Login(){
       nav(loc.state?.from || "/providers")
       location.reload()
     }catch(e:any){
-      setErr(e?.message || "Login failed")
+      const msg = e?.error === "email_not_verified" ? "Please verify your email before logging in" : (e?.message || "Login failed")
+      setErr(msg)
     }finally{
       setLoading(false)
     }
   }
 
   return (
-    <div className="max-w-sm mx-auto">
+    <div className="max-w-sm mx-auto card card-pad">
       <h1 className="text-xl font-semibold mb-4">Log in</h1>
       <form onSubmit={submit} className="space-y-3" noValidate>
         <div className="space-y-1">

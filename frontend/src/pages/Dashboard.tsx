@@ -100,12 +100,12 @@ export default function Dashboard(){
         <>
           <div className="space-y-2 card card-pad">
             <div className="font-medium">My services</div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2">
               <div className="grow min-w-[180px]">
                 <label className="text-sm text-[--muted]" htmlFor="svc-title">Title</label>
                 <input id="svc-title" className="input" placeholder="Classic manicure" value={svcTitle} onChange={e=>setSvcTitle(e.target.value)} />
               </div>
-              <div>
+              <div className="grow sm:grow-0">
                 <label className="text-sm text-[--muted]" htmlFor="svc-category">Category</label>
                 <select id="svc-category" className="input" value={svcCategoryId} onChange={e=>setSvcCategoryId(e.target.value)}>
                   <option value="">None</option>
@@ -114,14 +114,14 @@ export default function Dashboard(){
               </div>
               <div>
                 <label className="text-sm text-[--muted]" htmlFor="svc-price">Price</label>
-                <input id="svc-price" className="input w-28" placeholder="5000" type="number" value={svcPrice} onChange={e=>setSvcPrice(Number(e.target.value))} />
+                <input id="svc-price" className="input w-full sm:w-28" placeholder="5000" type="number" value={svcPrice} onChange={e=>setSvcPrice(Number(e.target.value))} />
               </div>
               <div>
                 <label className="text-sm text-[--muted]" htmlFor="svc-dur">Duration (min)</label>
-                <input id="svc-dur" className="input w-28" placeholder="60" type="number" value={svcDur} onChange={e=>setSvcDur(Number(e.target.value))} />
+                <input id="svc-dur" className="input w-full sm:w-28" placeholder="60" type="number" value={svcDur} onChange={e=>setSvcDur(Number(e.target.value))} />
               </div>
               <div className="self-end">
-                <button className="btn btn-outline" onClick={()=>createSvc.mutate()} disabled={createSvc.isPending}>Add</button>
+                <button className="btn btn-outline w-full sm:w-auto" onClick={()=>createSvc.mutate()} disabled={createSvc.isPending}>Add</button>
               </div>
             </div>
             <div className="grid gap-2">
@@ -135,24 +135,24 @@ export default function Dashboard(){
 
           <div className="space-y-2 card card-pad">
             <div className="font-medium">Working hours</div>
-            <div className="flex items-center gap-2">
-              <button className="btn btn-outline" onClick={()=>setDefault.mutate()} disabled={setDefault.isPending}>
-                Set default Mon–Fri 10:00–19:00
+            <div className="flex flex-wrap items-center gap-2">
+              <button className="btn btn-outline text-xs" onClick={()=>setDefault.mutate()} disabled={setDefault.isPending}>
+                Set default
               </button>
-              <button className="btn btn-primary" onClick={addRow}>Add interval</button>
-              <button className="btn btn-outline" onClick={clearAll}>Clear</button>
-              <button className="btn btn-outline" onClick={saveAll} disabled={saveHours.isPending}>Save</button>
+              <button className="btn btn-primary text-xs" onClick={addRow}>Add</button>
+              <button className="btn btn-outline text-xs" onClick={clearAll}>Clear</button>
+              <button className="btn btn-outline text-xs" onClick={saveAll} disabled={saveHours.isPending}>Save</button>
             </div>
             <div className="grid gap-2">
               {hoursDraft.map(r=> (
-                <div key={r.key} className="flex items-center gap-2">
-                  <select className="input w-28" value={r.weekday} onChange={e=>updateRow(r.key, { weekday: Number(e.target.value) })}>
+                <div key={r.key} className="flex flex-wrap items-center gap-2">
+                  <select className="input w-20 text-xs" value={r.weekday} onChange={e=>updateRow(r.key, { weekday: Number(e.target.value) })}>
                     {weekdayLabels.map((lab, idx)=> <option key={idx+1} value={idx+1}>{lab}</option>)}
                   </select>
-                  <input className="input w-28" placeholder="HH:MM" value={r.startTime} onChange={e=>updateRow(r.key, { startTime: e.target.value })} />
-                  <span className="text-[--muted] text-sm">–</span>
-                  <input className="input w-28" placeholder="HH:MM" value={r.endTime} onChange={e=>updateRow(r.key, { endTime: e.target.value })} />
-                  <button className="btn btn-outline" onClick={()=>removeRow(r.key)}>Remove</button>
+                  <input className="input w-20 text-xs" placeholder="HH:MM" value={r.startTime} onChange={e=>updateRow(r.key, { startTime: e.target.value })} />
+                  <span className="text-[--muted] text-xs">–</span>
+                  <input className="input w-20 text-xs" placeholder="HH:MM" value={r.endTime} onChange={e=>updateRow(r.key, { endTime: e.target.value })} />
+                  <button className="btn btn-outline text-xs px-2" onClick={()=>removeRow(r.key)}>×</button>
                 </div>
               ))}
             </div>
@@ -183,13 +183,15 @@ function ApptRow({ a }:{ a:any }){
   const confirm = useMutation({ mutationFn: ()=> api.changeAppointment(a.id, "confirm"), onSuccess: ()=> { toast("Confirmed","success"); location.reload() }, onError: (e:any)=> toast(e?.message||"Error", "error") })
   const cancel  = useMutation({ mutationFn: ()=> api.changeAppointment(a.id, "cancel"),  onSuccess: ()=> { toast("Cancelled","success"); location.reload() }, onError: (e:any)=> toast(e?.message||"Error", "error") })
   return (
-    <div className="card card-pad flex items-center gap-3">
-      <div className="flex-1">
-        <div className="font-medium">{new Date(a.startAt).toLocaleString()} — {a.serviceTitle||"—"}</div>
-        <div className="text-sm text-[--muted]">{a.userEmail ? `client: ${a.userEmail}` : null} · status: {a.status}</div>
+    <div className="card card-pad">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+        <div className="flex-1">
+          <div className="font-medium break-words">{new Date(a.startAt).toLocaleString()} — {a.serviceTitle||"—"}</div>
+          <div className="text-sm text-[--muted] break-words">{a.userEmail ? `client: ${a.userEmail}` : null} · status: {a.status}</div>
+        </div>
+        <button className="btn btn-outline text-xs" onClick={()=>confirm.mutate()} disabled={a.status==="CONFIRMED"}>Confirm</button>
+        <button className="btn btn-outline text-xs" onClick={()=>cancel.mutate()}  disabled={a.status==="CANCELLED"}>Cancel</button>
       </div>
-      <button className="btn btn-outline" onClick={()=>confirm.mutate()} disabled={a.status==="CONFIRMED"}>Confirm</button>
-      <button className="btn btn-outline" onClick={()=>cancel.mutate()}  disabled={a.status==="CANCELLED"}>Cancel</button>
     </div>
   )
 }

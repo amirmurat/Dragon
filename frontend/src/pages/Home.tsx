@@ -11,10 +11,10 @@ export default function Home(){
   const isOwner = role === "PROVIDER" || role === "ADMIN"
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6 md:space-y-10">
       <section className="card card-pad text-center" style={{background:"linear-gradient(180deg, var(--accent-50), transparent)"}}>
-        <div className="mx-auto max-w-3xl space-y-5">
-          <h1 className="font-display text-3xl md:text-4xl font-bold leading-tight">
+        <div className="mx-auto max-w-3xl space-y-4 md:space-y-5">
+          <h1 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold leading-tight">
             Your beauty — <span style={{color:"var(--brand-500)"}}>without waiting</span>
           </h1>
           <p className="text-[--muted]">

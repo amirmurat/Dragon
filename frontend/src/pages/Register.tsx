@@ -19,12 +19,8 @@ export default function Register(){
     if (password.length < 6) { setErr("Password must be at least 6 characters"); return }
     setLoading(true)
     try{
-      await api.register(email, password)
-      const data = await api.login(email, password) as any
-      if (!data?.token) throw new Error("No token")
-      setToken(data.token)
-      nav("/providers")
-      location.reload()
+      const result = await api.register(email, password) as any
+      setOk("Account created! Check your email (or console) for verification link.")
     }catch(e:any){
       setErr(e?.message || "Registration failed")
     }finally{
@@ -33,7 +29,7 @@ export default function Register(){
   }
 
   return (
-    <div className="max-w-sm mx-auto">
+    <div className="max-w-sm mx-auto card card-pad">
       <h1 className="text-xl font-semibold mb-4">Sign up</h1>
       <form onSubmit={submit} className="space-y-3" noValidate>
         <input className="input" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} type="email" autoComplete="email" required disabled={loading} />

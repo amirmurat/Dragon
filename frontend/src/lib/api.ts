@@ -43,6 +43,8 @@ export const api = {
   login: (email: string, password: string) =>
     req("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
   me: () => req("/auth/me"),
+  verifyEmail: (token: string) =>
+    req(`/auth/verify?token=${encodeURIComponent(token)}`),
 
   // public (теперь после логина)
   providers: (opts?: { q?: string; service?: string; categoryId?: string; minPrice?: number; maxPrice?: number }) =>

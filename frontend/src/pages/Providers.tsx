@@ -27,17 +27,17 @@ export default function Providers(){
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        <input className="input" placeholder="Search by name/address/description" value={q} onChange={e=>setQ(e.target.value)} />
+      <div className="flex flex-col sm:flex-row gap-2">
+        <input className="input flex-1" placeholder="Search by name/address/description" value={q} onChange={e=>setQ(e.target.value)} />
         {categories.data && (
-          <select className="input w-48" value={categoryId} onChange={e=>setCategoryId(e.target.value)}>
+          <select className="input w-full sm:w-48" value={categoryId} onChange={e=>setCategoryId(e.target.value)}>
             <option value="">All categories</option>
             {categories.data.map((c:any) => (
               <option key={c.id} value={c.id}>{c.icon || ""} {c.name}</option>
             ))}
           </select>
         )}
-        <button className="btn btn-primary" onClick={()=>query.refetch()} disabled={loading}>{loading? "Searching…" : "Search"}</button>
+        <button className="btn btn-primary whitespace-nowrap" onClick={()=>query.refetch()} disabled={loading}>{loading? "Searching…" : "Search"}</button>
       </div>
 
       {error && (
