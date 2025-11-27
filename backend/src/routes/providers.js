@@ -1,42 +1,31 @@
 ﻿import { Router } from "express"
 import { requireAuth, ensureOwnerOrAdmin, ensureRole } from "./middleware.js"
+import { buildProviderWhere, normalizePagination } from "../utils/providerFilters.js"
 
 export const providersRouter = Router()
 
 // ----- LIST (только после логина) -----
 providersRouter.get("/", requireAuth, async (req, res) => {
   const prisma = req.ctx.prisma
-  const q        = (req.query.q || "").toString().trim()
-  const serviceQ = (req.query.service || "").toString().trim()
-  const categoryId = req.query.categoryId || null
-  const minPrice = req.query.minPrice ? Number(req.query.minPrice) : null
-  const maxPrice = req.query.maxPrice ? Number(req.query.maxPrice) : null
-
-  const and = []
-  if (q) {
-    and.push({ OR: [
-      { name: { contains: q } },
-      { address: { contains: q } },
-      { description: { contains: q } },
-    ]})
-  }
-  const svc = {}
-  if (serviceQ) svc.title = { contains: serviceQ }
-  if (categoryId) svc.categoryId = categoryId
-  if (minPrice != null || maxPrice != null) {
-    svc.price = {}
-    if (minPrice != null) svc.price.gte = minPrice
-    if (maxPrice != null) svc.price.lte = maxPrice
-  }
-  if (Object.keys(svc).length > 0) and.push({ services: { some: { isActive: true, ...svc } } })
-
-  const where = and.length ? { AND: and } : undefined
-  const list = await prisma.provider.findMany({
-    where,
-    orderBy: { name: "asc" },
-    select: { id: true, name: true, address: true, description: true }
+  const where = buildProviderWhere({
+    q: req.query.q,
+    service: req.query.service,
+    categoryId: req.query.categoryId,
+    minPrice: req.query.minPrice,
+    maxPrice: req.query.maxPrice
   })
-  res.json(list)
+  const { page, pageSize, skip, take, sortBy, sortOrder } = normalizePagination(req.query)
+  const [items, total] = await prisma.$transaction([
+    prisma.provider.findMany({
+      where,
+      orderBy: { [sortBy]: sortOrder },
+      skip,
+      take,
+      select: { id: true, name: true, address: true, description: true, ratingAvg: true }
+    }),
+    prisma.provider.count({ where })
+  ])
+  res.json({ items, page, pageSize, total })
 })
 
 // ----- /me (оставляем как было) -----

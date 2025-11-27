@@ -90,6 +90,19 @@ adminRouter.get("/providers", async (req, res) => {
   res.json(items)
 })
 
+adminRouter.get("/metrics", async (req, res) => {
+  const prisma = req.ctx.prisma
+  const since = new Date()
+  since.setUTCDate(since.getUTCDate() - 1)
+  const [users, providers, appointments, newAppointments] = await prisma.$transaction([
+    prisma.user.count(),
+    prisma.provider.count(),
+    prisma.appointment.count(),
+    prisma.appointment.count({ where: { startAt: { gte: since } } })
+  ])
+  res.json({ users, providers, appointments, newAppointments })
+})
+
 // PATCH /admin/providers/:id  { name?, address?, description? }
 adminRouter.patch("/providers/:id", async (req, res) => {
   const prisma = req.ctx.prisma

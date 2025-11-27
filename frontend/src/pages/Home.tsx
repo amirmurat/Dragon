@@ -3,6 +3,26 @@ import { useTitle } from "@/ui/useTitle"
 import { getToken, api } from "@/lib/api"
 import { useQuery } from "@tanstack/react-query"
 
+const collections = [
+  { title: "Hair & styling", desc: "Cuts, color, glossy blowouts", img: "https://makeup.ru/storage/articles/156361/conversions/J3rINpyJcUzSvTiOktJwoRW1YQGsPMtFZrZIltvM-content_front.jpg?resized" },
+  { title: "Makeup artistry", desc: "Soft glam, bridal, editorial looks", img: "https://oblaka4you.ru/thumb/2/DHTSVXVCHPRmGFXU10KooA/800r450/d/lvechermak_22.jpg" },
+  { title: "Brows & lashes", desc: "Lamination, shaping, lash volume", img: "https://stepen.ua/content/news/001000-002000/brovi-zalog-idealnogo-vneshnego-vida-li_orig_1722.jpg" },
+  { title: "Nails & art", desc: "Chrome, French, signature gel", img: "https://s0.rbk.ru/v6_top_pics/media/img/8/81/347470478098818.jpeg" }
+]
+
+const features = [
+  { tag: "Fast", title: "Live slots", desc: "Pick a time, free slots appear instantly in your timezone." },
+  { tag: "Convenient", title: "No phone calls", desc: "All confirmations, reminders and changes stay inside MoonSalon." },
+  { tag: "Elegant", title: "For women", desc: "Soft blush palette, calm typography, one-handed navigation." },
+  { tag: "Trusted", title: "Curated salons", desc: "Only verified studios with 4.5★+ ratings join the platform." }
+]
+
+const stats = [
+  { value: "120+", label: "providers" },
+  { value: "35", label: "cities & districts" },
+  { value: "4.8★", label: "average rating" }
+]
+
 export default function Home(){
   useTitle("MoonSalon — Home")
   const token = getToken()
@@ -11,17 +31,13 @@ export default function Home(){
   const isOwner = role === "PROVIDER" || role === "ADMIN"
 
   return (
-    <div className="space-y-6 md:space-y-10">
-      <section className="card card-pad text-center" style={{background:"linear-gradient(180deg, var(--accent-50), transparent)"}}>
-        <div className="mx-auto max-w-3xl space-y-4 md:space-y-5">
-          <h1 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold leading-tight">
-            Your beauty — <span style={{color:"var(--brand-500)"}}>without waiting</span>
-          </h1>
-          <p className="text-[--muted]">
-            Nails, hair, brows, massage — book top providers in a few clicks.
-            No calls or long chats.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
+    <div className="home-shell">
+      <section className="hero-section">
+        <div className="hero-text">
+          <p className="hero-label">Beauty concierge</p>
+          <h1>Your beauty, without waiting</h1>
+          <p>Nails, hair, brows, massage. Book women-led studios in two clicks, no calls or long chats.</p>
+          <div className="hero-actions">
             <Link to="/providers" className="btn btn-primary">Find a provider</Link>
             {!token ? (
               <>
@@ -35,26 +51,39 @@ export default function Home(){
               </>
             )}
           </div>
-          <div className="text-xs text-[--muted]">100+ providers already with MoonSalon</div>
         </div>
+        <div className="hero-photo" />
       </section>
 
-      <section className="grid md:grid-cols-3 gap-4">
-        <div className="card card-pad space-y-2">
-          <div className="badge">Fast</div>
-          <div className="font-medium">Live slots</div>
-          <p className="text-sm text-[--muted]">Pick a time — free slots appear instantly.</p>
-        </div>
-        <div className="card card-pad space-y-2">
-          <div className="badge">Convenient</div>
-          <div className="font-medium">No phone calls</div>
-          <p className="text-sm text-[--muted]">Booking, confirmation and reminders — in one place.</p>
-        </div>
-        <div className="card card-pad space-y-2">
-          <div className="badge">Elegant</div>
-          <div className="font-medium">For women</div>
-          <p className="text-sm text-[--muted]">Clean design with soft blush accents.</p>
-        </div>
+      <section className="stats-row">
+        {stats.map(item=>(
+          <div key={item.label}>
+            <div className="stats-value">{item.value}</div>
+            <div className="stats-label">{item.label}</div>
+          </div>
+        ))}
+      </section>
+
+      <section className="collections-grid">
+        {collections.map(card=>(
+          <div key={card.title} className="collection-card">
+            <img src={card.img} alt={card.title} loading="lazy" />
+            <div className="collection-overlay">
+              <div className="collection-title">{card.title}</div>
+              <p>{card.desc}</p>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      <section className="feature-grid">
+        {features.map(item=>(
+          <div key={item.title} className="feature-card">
+            <div className="badge">{item.tag}</div>
+            <div className="feature-title">{item.title}</div>
+            <p>{item.desc}</p>
+          </div>
+        ))}
       </section>
     </div>
   )

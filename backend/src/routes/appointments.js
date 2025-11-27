@@ -1,6 +1,7 @@
 ﻿import { Router } from "express"
 import { requireAuth, ensureRole } from "./middleware.js"
 import { ROLES } from "../roles.js"
+import { logActivity } from "../loggers.js"
 
 export const appointmentsRouter = Router()
 
@@ -9,24 +10,51 @@ appointmentsRouter.get("/", requireAuth, async (req, res) => {
   const prisma = req.ctx.prisma
   const mine = req.query.mine === "true"
   const where = mine ? { userId: req.user.id } : {}
-  const items = await prisma.appointment.findMany({
-    where,
-    orderBy: { startAt: "desc" },
-    take: 200,
-    include: { service: true, provider: true }
+  const statuses = (req.query.status || "").toString().split(",").map(s => s.trim()).filter(Boolean)
+  if (statuses.length) where.status = { in: statuses }
+  const range = {}
+  if (req.query.dateFrom) {
+    const d = new Date(req.query.dateFrom)
+    if (!isNaN(d.valueOf())) range.gte = d
+  }
+  if (req.query.dateTo) {
+    const d = new Date(req.query.dateTo)
+    if (!isNaN(d.valueOf())) range.lte = d
+  }
+  if (Object.keys(range).length) where.startAt = range
+  const page = Math.max(1, Number(req.query.page) || 1)
+  const pageSizeRaw = Number(req.query.pageSize) || 10
+  const pageSize = Math.min(Math.max(pageSizeRaw, 5), 50)
+  const skip = (page - 1) * pageSize
+  const sortBy = req.query.sortBy === "status" ? "status" : "startAt"
+  const sortOrder = req.query.sortOrder === "asc" ? "asc" : "desc"
+  const [items, total] = await prisma.$transaction([
+    prisma.appointment.findMany({
+      where,
+      orderBy: { [sortBy]: sortOrder },
+      skip,
+      take: pageSize,
+      include: { service: true, provider: true }
+    }),
+    prisma.appointment.count({ where })
+  ])
+  res.json({
+    items: items.map(a => ({
+      id: a.id,
+      providerId: a.providerId,
+      providerName: a.provider?.name ?? null,
+      userId: a.userId,
+      startAt: a.startAt,
+      endAt: a.endAt,
+      status: a.status,
+      priceFinal: a.priceFinal ?? null,
+      serviceId: a.serviceId,
+      serviceTitle: a.service?.title ?? null
+    })),
+    page,
+    pageSize,
+    total
   })
-  res.json(items.map(a => ({
-    id: a.id,
-    providerId: a.providerId,
-    providerName: a.provider?.name ?? null,
-    userId: a.userId,
-    startAt: a.startAt,
-    endAt: a.endAt,
-    status: a.status,
-    priceFinal: a.priceFinal ?? null,
-    serviceId: a.serviceId,
-    serviceTitle: a.service?.title ?? null,
-  })))
 })
 
 // Создание записи (CLIENT)
@@ -74,6 +102,7 @@ appointmentsRouter.post("/", requireAuth, ensureRole(ROLES.CLIENT), async (req, 
       priceFinal: null,
     }
   })
+  logActivity("appointment_created", { appointmentId: created.id, userId: req.user.id, providerId })
   res.status(201).json(created)
 })
 
@@ -90,6 +119,7 @@ appointmentsRouter.patch("/:id", requireAuth, async (req, res) => {
   if (action === "cancel" && req.user.role === ROLES.CLIENT) {
     if (a.userId !== req.user.id) return res.status(403).json({ error: "forbidden" })
     const upd = await prisma.appointment.update({ where: { id: a.id }, data: { status: "CANCELLED" } })
+    logActivity("appointment_cancelled", { appointmentId: a.id, userId: req.user.id })
     return res.json(upd)
   }
 
@@ -98,6 +128,7 @@ appointmentsRouter.patch("/:id", requireAuth, async (req, res) => {
   if (req.user.role === ROLES.ADMIN || isOwner) {
     const status = action === "confirm" ? "CONFIRMED" : "CANCELLED"
     const upd = await prisma.appointment.update({ where: { id: a.id }, data: { status } })
+    logActivity("appointment_status_changed", { appointmentId: a.id, userId: req.user.id, status })
     return res.json(upd)
   }
 

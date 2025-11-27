@@ -47,7 +47,7 @@ export const api = {
     req(`/auth/verify?token=${encodeURIComponent(token)}`),
 
   // public (теперь после логина)
-  providers: (opts?: { q?: string; service?: string; categoryId?: string; minPrice?: number; maxPrice?: number }) =>
+  providers: (opts?: { q?: string; service?: string; categoryId?: string; minPrice?: number; maxPrice?: number; page?: number; pageSize?: number; sortBy?: string; sortOrder?: string }) =>
     req("/providers" + qs(opts||{})),
   provider: (id: string) => req(`/providers/${id}`),
   providerServices: (id: string) => req(`/providers/${id}/services`),
@@ -56,7 +56,11 @@ export const api = {
 
   // appointments
   createAppointment: (payload: any) => req("/appointments", { method: "POST", body: JSON.stringify(payload) }),
-  myBookings: () => req("/appointments?mine=true"),
+  myBookings: (opts?: { page?: number; pageSize?: number; status?: string[]; dateFrom?: string; dateTo?: string; sortBy?: string; sortOrder?: string }) => {
+    const params: Record<string, any> = { mine: true, ...(opts || {}) }
+    if (Array.isArray(params.status)) params.status = params.status.join(",")
+    return req("/appointments" + qs(params))
+  },
   changeAppointment: (id: string, action: "cancel"|"confirm") =>
     req(`/appointments/${id}`, { method: "PATCH", body: JSON.stringify({ action }) }),
 
