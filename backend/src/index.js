@@ -16,7 +16,18 @@ app.use(express.json({ limit: "1mb" }))
 app.use(requestLogger)
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 200, standardHeaders: true, legacyHeaders: false })
 app.use(limiter)
-app.use((req, _res, next) => { req.ctx = { prisma: new PrismaClient() }; next() })
+app.use((req, res, next) => { 
+  req.ctx = { prisma: new PrismaClient() }
+  // Закрываем Prisma клиент после завершения ответа
+  const originalEnd = res.end
+  res.end = function(...args) {
+    if (req.ctx?.prisma) {
+      req.ctx.prisma.$disconnect().catch(() => {})
+    }
+    return originalEnd.apply(this, args)
+  }
+  next()
+})
 
 app.get("/api/health", (_req, res) => res.json({ status: "UP", service: "backend" }))
 
@@ -25,7 +36,13 @@ app.use("/providers", providersRouter)
 app.use("/appointments", appointmentsRouter)
 app.use("/admin", adminRouter)
 
-const port = process.env.PORT || 8080
-if (process.env.NODE_ENV !== "test") {
-  app.listen(port, () => console.log(`Backend listening on http://localhost:${port}`))
+// Запуск сервера - только если это НЕ тестовый режим
+// В тестах переменная окружения NODE_ENV=test устанавливается ДО импорта
+const port = Number(process.env.PORT) || 8080
+const isTestMode = process.env.NODE_ENV === "test" || port === 0 || process.env.PORT === "0"
+
+if (!isTestMode) {
+  app.listen(port, () => {
+    console.log(`Backend listening on http://localhost:${port}`)
+  })
 }
