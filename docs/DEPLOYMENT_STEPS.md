@@ -158,11 +158,20 @@ npm run seed
 4. Настройте проект:
 
    - **Framework Preset:** Vite (или Other, если Vite нет в списке)
-   - **Root Directory:** `frontend`
-   - **Build Command:** `npm run build` (или оставьте пустым, если используется `vercel.json`)
-   - **Output Directory:** `dist` (или оставьте пустым, если используется `vercel.json`)
+   - **Root Directory:** `frontend` ⚠️ **ОБЯЗАТЕЛЬНО!**
+   - **Build Command:** `npm run build` (или оставьте пустым - Vercel автоматически определит для Vite)
+   - **Output Directory:** `dist` (или оставьте пустым - Vercel автоматически определит для Vite)
 
-   ⚠️ **Важно:** Если вы используете `vercel.json` (который уже есть в проекте), Vercel автоматически использует настройки из него. В этом случае можно оставить Build Command и Output Directory пустыми в настройках проекта.
+   ⚠️ **КРИТИЧЕСКИ ВАЖНО:**
+
+   - Если Root Directory установлен как `frontend`, Vercel автоматически переходит в эту директорию перед выполнением команд
+   - **НЕ используйте `cd frontend` в Build Command!** Используйте только `npm run build` или оставьте пустым
+   - Если вы видите ошибку `cd frontend: No such file or directory`, проверьте настройки проекта:
+     - Settings → General → Build & Development Settings
+     - Убедитесь, что Build Command НЕ содержит `cd frontend`
+     - Удалите `cd frontend &&` из Build Command, если он там есть
+   - Файл `vercel.json` в корне проекта содержит только настройки роутинга для SPA
+   - Build Command и Output Directory можно оставить пустыми - Vercel автоматически определит их для Vite
 
 5. Добавьте Environment Variable:
 
@@ -588,12 +597,18 @@ Code: NOT_FOUND
 
 **1. Проверьте настройки проекта в Vercel:**
 
-- Откройте Vercel Dashboard → ваш проект → Settings → General
+- Откройте Vercel Dashboard → ваш проект → Settings → General → Build & Development Settings
 - Проверьте:
+
   - **Root Directory:** `frontend` ✅
   - **Framework Preset:** Vite (или Other)
-  - **Build Command:** `npm run build` (или оставьте пустым, если используется `vercel.json`)
-  - **Output Directory:** `dist` (или оставьте пустым, если используется `vercel.json`)
+  - **Build Command:** `npm run build` ⚠️ **БЕЗ `cd frontend`!** (или оставьте пустым)
+  - **Output Directory:** `dist` (или оставьте пустым)
+
+  ⚠️ **Если Build Command содержит `cd frontend && npm install && npm run build`:**
+
+  - Удалите `cd frontend &&` из начала команды
+  - Оставьте только `npm run build` или полностью очистите поле (Vercel определит автоматически)
 
 **2. Проверьте `vercel.json`:**
 
@@ -602,8 +617,6 @@ Code: NOT_FOUND
 ```json
 {
   "version": 2,
-  "buildCommand": "cd frontend && npm install && npm run build",
-  "outputDirectory": "frontend/dist",
   "rewrites": [
     {
       "source": "/(.*)",
@@ -613,9 +626,11 @@ Code: NOT_FOUND
 }
 ```
 
+⚠️ **Важно:** Если Root Directory установлен как `frontend`, НЕ используйте `cd frontend` в командах - Vercel уже находится в этой директории!
+
 **3. Если используете Root Directory `frontend`:**
 
-- В настройках проекта установите **Root Directory:** `frontend`
+- В настройках проекта установите **Root Directory:** `frontend` ✅
 - Build Command и Output Directory можно оставить пустыми (Vercel автоматически определит для Vite)
 - Или используйте:
   - **Build Command:** `npm run build`
@@ -625,6 +640,54 @@ Code: NOT_FOUND
 
 - Deployments → выберите последний деплой → "Redeploy"
 - Или запушьте новый коммит в GitHub
+
+### Проблема: Ошибка "cd frontend: No such file or directory" в Vercel
+
+**Ошибка выглядит так:**
+
+```
+sh: line 1: cd: frontend: No such file or directory
+Error: Command "cd frontend && npm install && npm run build" exited with 1
+```
+
+**Решение:**
+
+Эта ошибка возникает, когда в настройках проекта в Vercel UI установлен Build Command с `cd frontend`, но Root Directory уже установлен как `frontend`. Vercel автоматически переходит в Root Directory, поэтому `cd frontend` не нужен.
+
+**Шаг 1: Откройте настройки проекта:**
+
+1. Зайдите в Vercel Dashboard → ваш проект
+2. Откройте **Settings** (в верхнем меню или боковом меню слева)
+3. Перейдите в раздел **General** → **Build & Development Settings**
+
+**Шаг 2: Исправьте Build Command:**
+
+1. Найдите поле **"Build Command"** (или **"Build Command Override"**)
+2. Если там написано: `cd frontend && npm install && npm run build` или `cd frontend && npm run build`
+3. **Удалите `cd frontend &&`** из начала команды
+4. Оставьте только: `npm run build`
+5. Или **полностью очистите поле** (оставьте пустым) - Vercel автоматически определит команду для Vite
+6. Нажмите **"Save"** (или **"Save Changes"**)
+
+**Шаг 3: Проверьте другие настройки:**
+
+- **Root Directory:** должно быть `frontend` ✅
+- **Output Directory:** должно быть `dist` (или пустое) ✅
+- **Install Command:** можно оставить пустым (Vercel автоматически выполнит `npm install`)
+
+**Шаг 4: Пересоберите проект:**
+
+1. Перейдите в раздел **Deployments**
+2. Найдите последний деплой
+3. Нажмите на три точки (⋮) рядом с деплоем
+4. Выберите **"Redeploy"**
+5. Или просто запушьте новый коммит в GitHub - Vercel автоматически пересоберет проект
+
+**После исправления:**
+
+- Build Command должен быть: `npm run build` (без `cd frontend`)
+- Или Build Command должен быть пустым (Vercel определит автоматически)
+- Root Directory должен быть: `frontend`
 
 **Для Netlify:**
 
