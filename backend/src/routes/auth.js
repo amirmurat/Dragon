@@ -195,3 +195,44 @@ authRouter.get("/verify", async (req, res) => {
 
   return res.json({ ok: true, message: "Email verified successfully" });
 });
+
+// POST /auth/create-first-admin {email, password}
+// Временный эндпоинт для создания первого админа (работает только если в базе нет админов)
+authRouter.post("/create-first-admin", async (req, res) => {
+  const prisma = req.ctx.prisma;
+  const { email, password } = req.body || {};
+  if (!email || !password)
+    return res.status(400).json({ error: "email_and_password_required" });
+  if (String(password).length < 6)
+    return res.status(400).json({ error: "password_min_6" });
+
+  try {
+    // Проверяем, есть ли уже админы
+    const existingAdmin = await prisma.user.findFirst({
+      where: { role: ROLES.ADMIN }
+    });
+    if (existingAdmin) {
+      return res.status(403).json({ error: "admin_already_exists" });
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: {
+        email: String(email).toLowerCase(),
+        passwordHash: hash,
+        role: ROLES.ADMIN,
+        emailConfirmed: true, // Автоматически верифицируем для первого админа
+        emailVerifyToken: null,
+        emailVerifySent: null
+      },
+      select: { id: true, email: true, role: true, emailConfirmed: true }
+    });
+
+    console.log(`✅ Создан первый админ: ${user.email}`);
+    return res.status(201).json({ ok: true, user });
+  } catch (e) {
+    if (String(e?.code) === "P2002")
+      return res.status(409).json({ error: "email_exists" });
+    return res.status(500).json({ error: "create_admin_failed" });
+  }
+});
