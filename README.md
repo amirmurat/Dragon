@@ -38,13 +38,17 @@ cd moon-salon
 
 ### 2) Запуск backend (порт 8080)
 
+**Важно:** По умолчанию schema использует PostgreSQL (для production). Для локальной разработки с SQLite:
+
 ```bash
 cd backend
 npm ci
-npm run db:push      # создаст/обновит SQLite-схему
+npm run db:push      # создаст/обновит SQLite-схему (по умолчанию используется SQLite)
 npm run seed         # наполнит базу демо-данными (пользователи, мастера, услуги)
 npm run dev          # запустит сервер с автоперезапуском
 ```
+
+**Примечание:** По умолчанию используется SQLite для локальной разработки. Для production на Render нужно переключиться на PostgreSQL (см. `docs/DEPLOYMENT_STEPS.md`).
 
 Сервер поднимется на http://localhost:8080
 

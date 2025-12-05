@@ -2,6 +2,40 @@
 
 Этот документ содержит детальные инструкции для деплоя MoonSalon на облачные платформы.
 
+## ⚠️ КРИТИЧЕСКИ ВАЖНО перед деплоем!
+
+**Проблема:** Prisma schema по умолчанию использует SQLite (для локальной разработки), но на Render нужен PostgreSQL.
+
+**ОБЯЗАТЕЛЬНО выполните перед деплоем:**
+
+```bash
+cd backend
+npm run db:switch:postgresql  # переключить на PostgreSQL
+git add prisma/schema.prisma
+git commit -m "Switch to PostgreSQL for production"
+git push
+```
+
+**Проверьте, что в `backend/prisma/schema.prisma` теперь:**
+
+```prisma
+datasource db {
+  provider = "postgresql"  ← должно быть "postgresql"!
+  url      = env("DATABASE_URL")
+}
+```
+
+**После деплоя (для локальной разработки):**
+
+```bash
+cd backend
+npm run db:switch:sqlite  # вернуть на SQLite для локальной разработки
+npm run db:push
+npm run seed
+```
+
+---
+
 ## Вариант 1: Render (Backend) + Vercel (Frontend)
 
 ### Шаг 1: Подготовка репозитория
@@ -23,6 +57,9 @@
    - **Name:** `moonsalon-backend`
    - **Environment:** `Node`
    - **Build Command:** `cd backend && npm ci && npx prisma generate && npx prisma migrate deploy`
+
+   ⚠️ **КРИТИЧЕСКИ ВАЖНО:** Убедитесь, что вы выполнили переключение на PostgreSQL перед деплоем (см. раздел "⚠️ КРИТИЧЕСКИ ВАЖНО перед деплоем!" выше).
+
    - **Start Command:** `cd backend && npm start`
    - **Plan:** Free (или выберите платный)
 
@@ -36,12 +73,35 @@
    CORS_ORIGIN=https://your-frontend-domain.vercel.app
    ```
 
+   ⚠️ **Важно:** `CORS_ORIGIN` пока можно оставить как есть или оставить пустым.
+   Вы обновите его на **реальный URL вашего frontend** после деплоя frontend (см. Шаг 4).
+   Например, если ваш frontend будет `https://moonsalon-abc123.vercel.app`,
+   то используйте именно этот URL, а не `your-frontend-domain.vercel.app`!
+
 6. Создайте PostgreSQL базу данных:
 
-   - Нажмите "New +" → "PostgreSQL"
-   - Выберите Free план
-   - Скопируйте Internal Database URL
-   - Добавьте его в Environment Variables как `DATABASE_URL`
+   **В Render Dashboard (на главной странице):**
+
+   - Нажмите кнопку "New +" (вверху справа)
+   - В выпадающем меню выберите "PostgreSQL"
+   - В форме создания базы данных:
+     - **Name:** `moonsalon-db` (или любое другое имя)
+     - **Database:** `moonsalon` (или оставьте по умолчанию)
+     - **User:** `moonsalon` (или оставьте по умолчанию)
+     - **Region:** выберите ближайший к вам
+     - **Plan:** выберите **Free** (или платный, если нужен)
+   - Нажмите "Create Database"
+   - Дождитесь создания базы (обычно 1-2 минуты)
+   - После создания база появится в списке ваших сервисов на главной странице Render Dashboard
+   - **Кликните на название вашей базы данных** (например, `moonsalon-db`) в списке сервисов
+   - Это откроет страницу настроек базы данных
+   - В левом меню или в основном разделе найдите секцию **"Connections"** или **"Info"**
+   - Найдите поле **"Internal Database URL"** (может называться "Internal Connection String")
+   - Скопируйте этот URL (он будет выглядеть как: `postgresql://user:password@host:5432/dbname`)
+   - Вернитесь к настройке вашего Web Service
+   - В разделе "Environment Variables" найдите `DATABASE_URL`
+   - Вставьте скопированный Internal Database URL в значение `DATABASE_URL`
+   - Или можно оставить `DATABASE_URL` пустым и Render автоматически подключит базу, если вы используете `render.yaml`
 
 7. Нажмите "Create Web Service"
 8. Дождитесь завершения деплоя (обычно 5-10 минут)
@@ -74,11 +134,16 @@
 1. Вернитесь в Render Dashboard
 2. Откройте ваш backend сервис
 3. Перейдите в "Environment"
-4. Обновите `CORS_ORIGIN` на URL вашего frontend:
+4. Найдите переменную `CORS_ORIGIN`
+5. **Скопируйте реальный URL вашего frontend** из Vercel (из Шага 3, пункт 8)
+   - Это будет что-то вроде: `https://moonsalon-abc123.vercel.app` (ваш реальный URL будет другим!)
+6. Вставьте его в значение `CORS_ORIGIN`, заменив placeholder:
    ```
-   CORS_ORIGIN=https://moonsalon.vercel.app
+   CORS_ORIGIN=https://moonsalon-abc123.vercel.app
    ```
-5. Нажмите "Save Changes" - сервис автоматически перезапустится
+   ⚠️ **НЕ копируйте `your-frontend-domain.vercel.app` или `https://your-frontend-domain.vercel.app` - это был placeholder!**
+   ⚠️ **Используйте реальный URL из Vercel, который вы скопировали в Шаге 3, пункт 8!**
+7. Нажмите "Save Changes" - сервис автоматически перезапустится
 
 ### Шаг 5: Проверка деплоя
 
@@ -185,13 +250,51 @@
 
 ## Troubleshooting
 
+### Проблема: Ошибка "the URL must start with the protocol `file:`" или "SQLite database"
+
+**Ошибка выглядит так:**
+
+```
+Error: Prisma schema validation
+error: Error validating datasource `db`: the URL must start with the protocol `file:`.
+Datasource "db": SQLite database
+```
+
+**Решение:**
+
+1. **Проверьте `backend/prisma/schema.prisma`:**
+
+   ```prisma
+   datasource db {
+     provider = "postgresql"  ← должно быть "postgresql"!
+     url      = env("DATABASE_URL")
+   }
+   ```
+
+2. **Если там `sqlite`, измените на `postgresql`:**
+
+   ```bash
+   cd backend
+   npm run db:switch:postgresql
+   git add prisma/schema.prisma
+   git commit -m "Fix: Switch to PostgreSQL for production"
+   git push
+   ```
+
+3. **Дождитесь автоматического пересборки на Render** (или запустите вручную)
+
+4. **Проверьте, что `DATABASE_URL` в Render указывает на PostgreSQL:**
+   - Должен начинаться с `postgresql://` или `postgres://`
+   - Не должен начинаться с `file:`
+
 ### Проблема: Backend не запускается
 
 **Решение:**
 
 - Проверьте логи в Render Dashboard
-- Убедитесь, что `DATABASE_URL` правильно настроен
+- Убедитесь, что `DATABASE_URL` правильно настроен (PostgreSQL URL)
 - Проверьте, что Prisma миграции выполнены
+- Убедитесь, что в `schema.prisma` указан `provider = "postgresql"`
 
 ### Проблема: CORS ошибки
 
