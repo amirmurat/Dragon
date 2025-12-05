@@ -13,6 +13,41 @@ function signToken(user) {
   return jwt.sign(payload, secret, { expiresIn: "7d" })
 }
 
+/**
+ * @swagger
+ * /auth/register:
+ *   post:
+ *     summary: Регистрация нового пользователя
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RegisterRequest'
+ *     responses:
+ *       201:
+ *         description: Пользователь успешно зарегистрирован
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *                 verifyToken:
+ *                   type: string
+ *                   description: Токен для верификации email
+ *       400:
+ *         description: Неверные данные
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       409:
+ *         description: Email уже существует
+ */
 // POST /auth/register  {email, password}
 authRouter.post("/register", async (req, res) => {
   const prisma = req.ctx.prisma
@@ -43,6 +78,34 @@ authRouter.post("/register", async (req, res) => {
   }
 })
 
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Вход в систему
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LoginRequest'
+ *     responses:
+ *       200:
+ *         description: Успешный вход
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/LoginResponse'
+ *       401:
+ *         description: Неверные учетные данные
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Email не верифицирован
+ */
 // POST /auth/login  {email, password}  ->  {token, user:{id,email,role}}
 authRouter.post("/login", async (req, res) => {
   const prisma = req.ctx.prisma
@@ -63,6 +126,24 @@ authRouter.post("/login", async (req, res) => {
   return res.json({ token, user: { id: u.id, email: u.email, role: u.role } })
 })
 
+/**
+ * @swagger
+ * /auth/me:
+ *   get:
+ *     summary: Получить информацию о текущем пользователе
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Информация о пользователе
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Не авторизован
+ */
 // GET /auth/me -> {id,email,role}
 authRouter.get("/me", requireAuth, async (req, res) => {
   // requireAuth уже положил req.user

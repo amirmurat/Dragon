@@ -21,6 +21,13 @@ frontend/.eslintcache
 # Backend artifacts
 backend/node_modules/
 backend/dev.db-journal
+backend/prisma/test.db
+backend/logs/
+
+# Python virtual environment
+venv/
+__pycache__/
+*.pyc
 
 # Env
 *.env

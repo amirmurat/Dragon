@@ -4,6 +4,71 @@ import { buildProviderWhere, normalizePagination } from "../utils/providerFilter
 
 export const providersRouter = Router()
 
+/**
+ * @swagger
+ * /providers:
+ *   get:
+ *     summary: Получить список провайдеров с фильтрацией и пагинацией
+ *     tags: [Providers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *         description: Поиск по имени, адресу, описанию
+ *       - in: query
+ *         name: categoryId
+ *         schema:
+ *           type: string
+ *         description: Фильтр по категории
+ *       - in: query
+ *         name: minPrice
+ *         schema:
+ *           type: number
+ *         description: Минимальная цена услуги
+ *       - in: query
+ *         name: maxPrice
+ *         schema:
+ *           type: number
+ *         description: Максимальная цена услуги
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Номер страницы
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Размер страницы (5-50)
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [name, ratingAvg]
+ *           default: name
+ *         description: Поле для сортировки
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: asc
+ *         description: Порядок сортировки
+ *     responses:
+ *       200:
+ *         description: Список провайдеров
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProviderList'
+ *       401:
+ *         description: Не авторизован
+ */
 // ----- LIST (только после логина) -----
 providersRouter.get("/", requireAuth, async (req, res) => {
   const prisma = req.ctx.prisma
