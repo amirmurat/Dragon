@@ -12,7 +12,9 @@
     "db:push": "prisma db push",
     "seed": "node prisma/seed.js",
     "db:switch:sqlite": "node scripts/switch-db.js sqlite",
-    "db:switch:postgresql": "node scripts/switch-db.js postgresql"
+    "db:switch:postgresql": "node scripts/switch-db.js postgresql",
+    "create-admin": "node scripts/create-admin.mjs",
+    "make-admin": "node scripts/make-admin.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",

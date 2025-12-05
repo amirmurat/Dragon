@@ -17,9 +17,15 @@ if (!user) {
 
 const updated = await prisma.user.update({
   where: { email },
-  data: { role: "ADMIN" },
-  select: { id: true, email: true, role: true }
+  data: { 
+    role: "ADMIN",
+    emailConfirmed: true,
+    emailVerifyToken: null,
+    emailVerifySent: null
+  },
+  select: { id: true, email: true, role: true, emailConfirmed: true }
 })
 
-console.log("OK:", updated)
+console.log("✅ Пользователь назначен администратором:", updated)
+console.log("   Email Verified:", updated.emailConfirmed ? "✅" : "❌")
 await prisma.$disconnect()
