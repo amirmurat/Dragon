@@ -157,10 +157,12 @@ npm run seed
 3. Импортируйте ваш GitHub репозиторий
 4. Настройте проект:
 
-   - **Framework Preset:** Vite
+   - **Framework Preset:** Vite (или Other, если Vite нет в списке)
    - **Root Directory:** `frontend`
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `dist`
+   - **Build Command:** `npm run build` (или оставьте пустым, если используется `vercel.json`)
+   - **Output Directory:** `dist` (или оставьте пустым, если используется `vercel.json`)
+
+   ⚠️ **Важно:** Если вы используете `vercel.json` (который уже есть в проекте), Vercel автоматически использует настройки из него. В этом случае можно оставить Build Command и Output Directory пустыми в настройках проекта.
 
 5. Добавьте Environment Variable:
 
@@ -570,6 +572,59 @@ Environment Variable "VITE_API_BASE" references Secret "vite_api_base", which do
 
 3. **Пересоберите проект:**
    - Deployments → выберите последний деплой → "Redeploy"
+
+### Проблема: Ошибка 404 NOT_FOUND в Vercel
+
+**Ошибка выглядит так:**
+
+```
+404: NOT_FOUND
+Code: NOT_FOUND
+```
+
+**Решение:**
+
+Эта ошибка возникает, когда Vercel не может найти файлы или неправильно настроен роутинг для SPA.
+
+**1. Проверьте настройки проекта в Vercel:**
+
+- Откройте Vercel Dashboard → ваш проект → Settings → General
+- Проверьте:
+  - **Root Directory:** `frontend` ✅
+  - **Framework Preset:** Vite (или Other)
+  - **Build Command:** `npm run build` (или оставьте пустым, если используется `vercel.json`)
+  - **Output Directory:** `dist` (или оставьте пустым, если используется `vercel.json`)
+
+**2. Проверьте `vercel.json`:**
+
+- Убедитесь, что в корне проекта есть файл `vercel.json` с правильной конфигурацией:
+
+```json
+{
+  "version": 2,
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+```
+
+**3. Если используете Root Directory `frontend`:**
+
+- В настройках проекта установите **Root Directory:** `frontend`
+- Build Command и Output Directory можно оставить пустыми (Vercel автоматически определит для Vite)
+- Или используйте:
+  - **Build Command:** `npm run build`
+  - **Output Directory:** `dist`
+
+**4. Пересоберите проект:**
+
+- Deployments → выберите последний деплой → "Redeploy"
+- Или запушьте новый коммит в GitHub
 
 **Для Netlify:**
 
