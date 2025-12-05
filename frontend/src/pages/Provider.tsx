@@ -50,8 +50,8 @@ export default function Provider(){
           ) : (
             <>
               <div className="font-display text-2xl font-semibold">{info.data?.name || "—"}</div>
-              {info.data?.address && <div className="text-[--muted]">{info.data.address}</div>}
-              {info.data?.description && <div className="mt-2">{info.data.description}</div>}
+          {info.data?.address && <div className="text-[--muted]">{info.data.address}</div>}
+          {info.data?.description && <div className="mt-2">{info.data.description}</div>}
             </>
           )}
         </div>
@@ -73,10 +73,10 @@ export default function Provider(){
             {!loadingServices && services.data?.map((s:any)=>(
               <button key={s.id} type="button" className={"border p-3 w-full text-left cursor-pointer transition-all duration-200 "+(serviceId===s.id?"bg-[--accent-50] border-[--brand-500] shadow-md":"hover:bg-[--accent-50] hover:shadow-md border-[--accent-100]")} onClick={()=>setServiceId(s.id)}>
                 <div className="flex items-center justify-between">
-                  <div>
+                <div>
                     <div className="font-medium">{s.title} {s.category && <span className="badge">{s.category.name}</span>}</div>
                     <div className="text-sm text-[--muted]">{s.durationMin} min</div>
-                  </div>
+                </div>
                   <div className="font-medium">{s.price} ₸</div>
                 </div>
               </button>

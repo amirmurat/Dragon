@@ -153,7 +153,7 @@ export default function Dashboard(){
                   <span className="text-[--muted] text-xs">–</span>
                   <input className="input w-20 text-xs" placeholder="HH:MM" value={r.endTime} onChange={e=>updateRow(r.key, { endTime: e.target.value })} />
                   <button className="btn btn-outline text-xs px-2" onClick={()=>removeRow(r.key)}>×</button>
-                </div>
+            </div>
               ))}
             </div>
             <div className="text-sm text-[--muted]">
@@ -185,7 +185,7 @@ function ApptRow({ a }:{ a:any }){
   return (
     <div className="card card-pad">
       <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-        <div className="flex-1">
+      <div className="flex-1">
           <div className="font-medium break-words">{new Date(a.startAt).toLocaleString()} — {a.serviceTitle||"—"}</div>
           <div className="text-sm text-[--muted] break-words">{a.userEmail ? `client: ${a.userEmail}` : null} · status: {a.status}</div>
         </div>

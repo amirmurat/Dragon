@@ -115,20 +115,20 @@ function UsersTab(){
         {data.map(u=>(
           <div key={u.id} className="card card-pad">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div className="text-sm">
-                <div className="font-medium">{u.email}</div>
+            <div className="text-sm">
+              <div className="font-medium">{u.email}</div>
                 <div className="text-[--muted]">role: {ROLE_LABELS[u.role]}</div>
-              </div>
+            </div>
               <div className="flex flex-wrap items-center gap-2">
                 {( ["CLIENT","PROVIDER","ADMIN"] as const).map(r=>(
-                  <button key={r}
+                <button key={r}
                     className={"btn btn-outline text-xs "+(u.role===r?"navlink-active":"")}
-                    onClick={()=> changeRole(u.id, r)}
-                    disabled={u.role===r}
-                  >
-                    {ROLE_LABELS[r]}
-                  </button>
-                ))}
+                  onClick={()=> changeRole(u.id, r)}
+                  disabled={u.role===r}
+                >
+                  {ROLE_LABELS[r]}
+                </button>
+              ))}
                 <button className="btn btn-outline text-xs px-2" onClick={()=>removeUser(u.id)}>×</button>
               </div>
             </div>
@@ -202,7 +202,7 @@ function ProvidersTab(){
           <div key={p.id} className="card card-pad">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
               <div className="flex-1">
-                <div className="font-medium">{p.name}</div>
+            <div className="font-medium">{p.name}</div>
                 {p.address && <div className="text-sm text-[--muted]">{p.address}</div>}
                 {p.description && <div className="text-sm text-[--muted]">{p.description}</div>}
               </div>
