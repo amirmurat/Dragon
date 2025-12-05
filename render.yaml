@@ -1,0 +1,30 @@
+# Render.com configuration for MoonSalon
+# https://render.com/docs/yaml-spec
+
+services:
+  - type: web
+    name: moonsalon-backend
+    env: node
+    plan: free
+    buildCommand: cd backend && npm ci && npx prisma generate && npx prisma migrate deploy
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8080
+      - key: DATABASE_URL
+        fromDatabase:
+          name: moonsalon-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        sync: false  # Установите вручную после деплоя frontend
+
+databases:
+  - name: moonsalon-db
+    plan: free
+    databaseName: moonsalon
+    user: moonsalon
+

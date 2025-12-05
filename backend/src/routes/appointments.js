@@ -5,6 +5,55 @@ import { logActivity } from "../loggers.js"
 
 export const appointmentsRouter = Router()
 
+/**
+ * @swagger
+ * /appointments:
+ *   get:
+ *     summary: Получить список бронирований
+ *     tags: [Appointments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: mine
+ *         schema:
+ *           type: boolean
+ *         description: Получить только мои бронирования
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Фильтр по статусу (BOOKED,CONFIRMED,CANCELLED)
+ *       - in: query
+ *         name: dateFrom
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Начало диапазона дат
+ *       - in: query
+ *         name: dateTo
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Конец диапазона дат
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Список бронирований
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AppointmentList'
+ */
 // Мои брони (CLIENT) или фильтр по mine=true
 appointmentsRouter.get("/", requireAuth, async (req, res) => {
   const prisma = req.ctx.prisma
@@ -57,6 +106,32 @@ appointmentsRouter.get("/", requireAuth, async (req, res) => {
   })
 })
 
+/**
+ * @swagger
+ * /appointments:
+ *   post:
+ *     summary: Создать новое бронирование
+ *     tags: [Appointments]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateAppointmentRequest'
+ *     responses:
+ *       201:
+ *         description: Бронирование создано
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Appointment'
+ *       400:
+ *         description: Неверные данные
+ *       409:
+ *         description: Время занято
+ */
 // Создание записи (CLIENT)
 appointmentsRouter.post("/", requireAuth, ensureRole(ROLES.CLIENT), async (req, res) => {
   const prisma = req.ctx.prisma
