@@ -6,7 +6,7 @@ services:
     name: moonsalon-backend
     env: node
     plan: free
-    buildCommand: cd backend && npm ci && npx prisma generate && npx prisma migrate deploy
+    buildCommand: cd backend && npm ci && npx prisma generate && npx prisma db push --accept-data-loss
     startCommand: cd backend && npm start
     envVars:
       - key: NODE_ENV
@@ -20,11 +20,10 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ORIGIN
-        sync: false  # Установите вручную после деплоя frontend
+        sync: false # Установите вручную после деплоя frontend
 
 databases:
   - name: moonsalon-db
     plan: free
     databaseName: moonsalon
     user: moonsalon
-

@@ -6,12 +6,16 @@
 
 **Проблема:** Prisma schema по умолчанию использует SQLite (для локальной разработки), но на Render нужен PostgreSQL.
 
+**Если вы видите ошибку "migrate found failed migrations"** - см. раздел Troubleshooting ниже.
+
 **ОБЯЗАТЕЛЬНО выполните перед деплоем:**
 
 ```bash
 cd backend
-npm run db:switch:postgresql  # переключить на PostgreSQL
+npm run db:switch:postgresql  # переключит на PostgreSQL (обновит schema.prisma и migration_lock.toml)
+
 git add prisma/schema.prisma
+git add prisma/migrations/migration_lock.toml
 git commit -m "Switch to PostgreSQL for production"
 git push
 ```
@@ -56,9 +60,14 @@ npm run seed
 
    - **Name:** `moonsalon-backend`
    - **Environment:** `Node`
-   - **Build Command:** `cd backend && npm ci && npx prisma generate && npx prisma migrate deploy`
+   - **Build Command:** `cd backend && npm ci && npx prisma generate && npx prisma db push --accept-data-loss`
 
-   ⚠️ **КРИТИЧЕСКИ ВАЖНО:** Убедитесь, что вы выполнили переключение на PostgreSQL перед деплоем (см. раздел "⚠️ КРИТИЧЕСКИ ВАЖНО перед деплоем!" выше).
+   ⚠️ **КРИТИЧЕСКИ ВАЖНО:**
+
+   - Используем `prisma db push` вместо `migrate deploy`, так как миграции были созданы для SQLite, а мы используем PostgreSQL.
+   - `db push` создаст схему напрямую из `schema.prisma` без использования миграций.
+   - Если вы видите ошибку про failed migrations, см. раздел Troubleshooting ниже.
+   - Убедитесь, что вы выполнили переключение на PostgreSQL перед деплоем (см. раздел "⚠️ КРИТИЧЕСКИ ВАЖНО перед деплоем!" выше).
 
    - **Start Command:** `cd backend && npm start`
    - **Plan:** Free (или выберите платный)
@@ -105,7 +114,34 @@ npm run seed
 
 7. Нажмите "Create Web Service"
 8. Дождитесь завершения деплоя (обычно 5-10 минут)
-9. Скопируйте URL вашего сервиса (например: `https://moonsalon-backend.onrender.com`)
+9. **Скопируйте реальный URL вашего backend сервиса:**
+
+   **Где найти URL в Render Dashboard (пошагово):**
+
+   1. **Откройте ваш Web Service:**
+
+      - На главной странице Render Dashboard нажмите на название вашего сервиса
+      - Например, если сервис называется `moonsalon-backend`, нажмите на него
+
+   2. **URL находится в верхней части страницы сервиса:**
+
+      - Прямо под названием сервиса (большой заголовок)
+      - Вы увидите синюю ссылку с текстом типа: `https://moonsalon-backend.onrender.com`
+      - Или: `https://moonsalon-backend-xxxx.onrender.com` (где `xxxx` - случайные символы)
+      - Это и есть ваш реальный backend URL!
+
+   3. **Скопируйте URL:**
+      - Наведите курсор на синюю ссылку
+      - Правый клик → "Copy link address" (или просто выделите текст и Ctrl+C / Cmd+C)
+      - Сохраните этот URL - он понадобится для настройки frontend
+
+   ⚠️ **ВАЖНО:** НЕ используйте примеры из инструкций - используйте ваш реальный URL из Render Dashboard!
+
+   **Если не видите URL:**
+
+   - Убедитесь, что деплой завершился успешно (статус "Live" или зеленая галочка)
+   - Проверьте раздел "Info" в левом меню - там также должен быть указан URL
+   - В разделе "Events" после успешного деплоя будет сообщение с URL
 
 ### Шаг 3: Деплой Frontend на Vercel
 
@@ -121,9 +157,21 @@ npm run seed
 
 5. Добавьте Environment Variable:
 
-   ```
-   VITE_API_BASE=https://moonsalon-backend.onrender.com
-   ```
+   ⚠️ **ВАЖНО:** Добавляйте обычную переменную окружения, а не Secret!
+
+   - В разделе "Environment Variables" нажмите "Add New"
+   - **Name:** `VITE_API_BASE`
+   - **Value:** Вставьте **реальный URL вашего backend** из Render (который вы скопировали в Шаге 2, пункт 9)
+   - ⚠️ **НЕ используйте примеры** - используйте ваш реальный URL из Render Dashboard!
+   - **Environment:** Выберите "Production", "Preview" и "Development" (или только "Production")
+   - **НЕ выбирайте "Secret"** - это должна быть обычная переменная окружения
+   - Нажмите "Save"
+
+   ⚠️ **Если вы видите ошибку "references Secret which does not exist":**
+
+   - Удалите существующую переменную (если есть)
+   - Добавьте новую переменную как описано выше
+   - Убедитесь, что вы НЕ выбираете опцию "Secret"
 
 6. Нажмите "Deploy"
 7. Дождитесь завершения деплоя
@@ -150,21 +198,23 @@ npm run seed
 1. **Backend Health Check:**
 
    ```
-   https://moonsalon-backend.onrender.com/api/health
+   https://<ваш-реальный-backend-url>.onrender.com/api/health
    ```
+
+   ⚠️ **Замените `<ваш-реальный-backend-url>` на реальный URL из Render Dashboard!**
 
    Должен вернуть: `{"status":"UP","service":"backend"}`
 
 2. **Swagger Documentation:**
 
    ```
-   https://moonsalon-backend.onrender.com/api-docs
+   https://<ваш-реальный-backend-url>.onrender.com/api-docs
    ```
 
 3. **Prometheus Metrics:**
 
    ```
-   https://moonsalon-backend.onrender.com/metrics
+   https://<ваш-реальный-backend-url>.onrender.com/metrics
    ```
 
 4. **Frontend:**
@@ -188,9 +238,20 @@ npm run seed
 
 5. Добавьте Environment Variable:
 
-   ```
-   VITE_API_BASE=https://moonsalon-backend.onrender.com
-   ```
+   ⚠️ **ВАЖНО:** Добавляйте обычную переменную окружения, а не Secret!
+
+   - В разделе "Site settings" → "Environment variables" нажмите "Add a variable"
+   - **Key:** `VITE_API_BASE`
+   - **Value:** Вставьте **реальный URL вашего backend** из Render (который вы скопировали в Шаге 2, пункт 9)
+   - ⚠️ **НЕ используйте примеры** - используйте ваш реальный URL из Render Dashboard!
+   - **Scopes:** Выберите "All scopes" или "Production"
+   - Нажмите "Save"
+
+   ⚠️ **Если вы видите ошибку "references Secret which does not exist":**
+
+   - Удалите существующую переменную (если есть)
+   - Добавьте новую переменную как описано выше
+   - Убедитесь, что вы НЕ используете Secrets
 
 6. Нажмите "Deploy site"
 7. Обновите `CORS_ORIGIN` в Render на URL Netlify
@@ -287,13 +348,69 @@ Datasource "db": SQLite database
    - Должен начинаться с `postgresql://` или `postgres://`
    - Не должен начинаться с `file:`
 
+### Проблема: Ошибка "migrate found failed migrations in the target database"
+
+**Ошибка выглядит так:**
+
+```
+Error: P3009
+migrate found failed migrations in the target database, new migrations will not be applied.
+The `20251022033954_init` migration started at ... failed
+```
+
+**Решение:**
+
+Эта ошибка возникает, когда миграции были созданы для SQLite, а теперь применяются к PostgreSQL. Есть два варианта:
+
+**Вариант 1: Использовать `db push` (рекомендуется)**
+
+1. **Измените Build Command в Render Dashboard:**
+
+   - Зайдите в Settings вашего Web Service
+   - Найдите "Build Command"
+   - Измените на: `cd backend && npm ci && npx prisma generate && npx prisma db push --accept-data-loss`
+   - Сохраните изменения
+   - Запустите Manual Deploy
+
+2. **`db push` создаст схему напрямую из `schema.prisma`**, игнорируя failed migrations.
+
+**Вариант 2: Очистить failed migrations вручную**
+
+Если вы хотите использовать миграции, нужно очистить failed migrations:
+
+1. **Подключитесь к базе данных через Render Shell:**
+
+   - В Render Dashboard: Settings → Shell
+   - Выполните:
+
+   ```bash
+   cd backend
+   npx prisma migrate resolve --rolled-back 20251022033954_init
+   ```
+
+   (замените `20251022033954_init` на имя вашей failed migration)
+
+2. **Или удалите таблицу миграций:**
+
+   ```sql
+   -- В Render: PostgreSQL → Connect → Query
+   DROP TABLE IF EXISTS "_prisma_migrations";
+   ```
+
+3. **Затем используйте `db push` для создания схемы:**
+   ```bash
+   npx prisma db push --accept-data-loss
+   ```
+
+**Рекомендация:** Используйте Вариант 1 (`db push`) - это проще и надежнее для первого деплоя.
+
 ### Проблема: Backend не запускается
 
 **Решение:**
 
 - Проверьте логи в Render Dashboard
 - Убедитесь, что `DATABASE_URL` правильно настроен (PostgreSQL URL)
-- Проверьте, что Prisma миграции выполнены
+- Проверьте, что Prisma схема применена (используйте `db push` или исправьте failed migrations)
 - Убедитесь, что в `schema.prisma` указан `provider = "postgresql"`
 
 ### Проблема: CORS ошибки
@@ -320,6 +437,97 @@ Datasource "db": SQLite database
 - Проверьте консоль браузера
 - Убедитесь, что `VITE_API_BASE` правильно настроен
 - Проверьте, что backend доступен по указанному URL
+
+### Проблема: Ошибка "Environment Variable references Secret which does not exist"
+
+**Ошибка выглядит так:**
+
+```
+Environment Variable "VITE_API_BASE" references Secret "vite_api_base", which does not exist.
+```
+
+**Решение:**
+
+Эта ошибка возникает, когда переменная окружения настроена как Secret, но Secret не существует.
+
+**Для Vercel:**
+
+1. **Удалите существующую переменную:**
+
+   - Зайдите в Settings → Environment Variables
+   - Найдите переменную `VITE_API_BASE`
+   - Если она существует, удалите её (нажмите на иконку корзины)
+
+2. **Добавьте новую переменную правильно:**
+
+   - Нажмите "Add New"
+   - **Name:** `VITE_API_BASE`
+   - **Value:** Вставьте **реальный URL вашего backend** из Render (который вы скопировали в Шаге 2, пункт 9)
+   - ⚠️ **НЕ используйте примеры** - используйте ваш реальный URL из Render Dashboard!
+   - **Environment:** Выберите "Production", "Preview" и "Development" (или только "Production")
+   - **НЕ выбирайте опцию "Secret"** - это должна быть обычная переменная окружения
+   - Нажмите "Save"
+
+3. **Пересоберите проект:**
+   - Deployments → выберите последний деплой → "Redeploy"
+
+**Для Netlify:**
+
+1. **Удалите существующую переменную:**
+
+   - Зайдите в Site settings → Environment variables
+   - Найдите переменную `VITE_API_BASE`
+   - Если она существует, удалите её
+
+2. **Добавьте новую переменную правильно:**
+
+   - Нажмите "Add a variable"
+   - **Key:** `VITE_API_BASE`
+   - **Value:** Вставьте **реальный URL вашего backend** из Render (который вы скопировали в Шаге 2, пункт 9)
+   - ⚠️ **НЕ используйте примеры** - используйте ваш реальный URL из Render Dashboard!
+   - **Scopes:** Выберите "All scopes" или "Production"
+   - Нажмите "Save"
+
+3. **Пересоберите проект:**
+   - Deploys → "Trigger deploy" → "Clear cache and deploy site"
+
+### Проблема: Ошибка "The 'X-Forwarded-For' header is set but the Express 'trust proxy' setting is false"
+
+**Ошибка выглядит так:**
+
+```
+ValidationError: The 'X-Forwarded-For' header is set but the Express 'trust proxy' setting is false
+```
+
+**Решение:**
+
+Эта ошибка возникает, когда приложение работает за прокси (Render, Heroku), но Express не настроен для работы с прокси.
+
+**Исправление:**
+
+1. **Откройте `backend/src/index.js`**
+
+2. **Добавьте `trust proxy` перед использованием rate limiter:**
+
+   ```javascript
+   export const app = express();
+
+   // Trust proxy для работы за прокси (Render, Heroku, etc.)
+   app.set("trust proxy", 1);
+
+   app.use(helmet());
+   // ... остальной код
+   ```
+
+3. **Закоммитьте и запушьте изменения:**
+
+   ```bash
+   git add backend/src/index.js
+   git commit -m "Fix: Add trust proxy for Render deployment"
+   git push
+   ```
+
+4. **Render автоматически пересоберет проект** - ошибка исчезнет
 
 ## Мониторинг после деплоя
 
