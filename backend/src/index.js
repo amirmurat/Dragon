@@ -12,6 +12,10 @@ import { setupSwagger } from "./swagger.js";
 import { register } from "./metrics.js";
 
 export const app = express();
+
+// Trust proxy для работы за прокси (Render, Heroku, etc.)
+app.set("trust proxy", 1);
+
 app.use(helmet());
 const corsOrigin = process.env.CORS_ORIGIN || "http://localhost:5173";
 app.use(cors({ origin: corsOrigin, credentials: true }));
