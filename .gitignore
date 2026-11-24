@@ -33,3 +33,7 @@ __pycache__/
 *.env
 frontend/.env
 backend/.env
+
+# Python virtual environment
+venv/
+.venv/
